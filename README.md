@@ -33,15 +33,17 @@ RehearsePrompt는 자신의 스피치 역량을 사전에 충실히 다지기 �
 
 ## 📥 다운로드 및 배포 바이너리 (v1.0.0)
 
-공식 릴리스 빌드 산출물은 `release/` 폴더 또는 GitHub Releases 탭에서 다운로드할 수 있습니다.
+공식 릴리스 바이너리는 [GitHub Releases (v1.0.0)](https://github.com/lij0825/RehearsePrompt/releases/tag/v1.0.0)에서 다운로드할 수 있습니다. 아래 파일명을 클릭하면 즉시 다운로드됩니다.
 
-| 운영체제 | 배포 파일 | 형식 | 파일 크기 | SHA-256 무결성 해시 |
+| 운영체제 | 배포 파일 (클릭 시 다운로드) | 형식 | 파일 크기 | SHA-256 무결성 해시 |
 | :--- | :--- | :--- | :--- | :--- |
-| **Windows 64-bit** | [`RehearsePrompt-1.0.0-Windows-x64-setup.exe`](release/RehearsePrompt-1.0.0-Windows-x64-setup.exe) | NSIS 인스톨러 | 79.2 MB | `F593A8871EAD80B9837EB7A287284DB8CBAC54F9D2F448589743AE760692E7BE` |
-| **Windows 64-bit** | [`RehearsePrompt-1.0.0-Windows-x64.msi`](release/RehearsePrompt-1.0.0-Windows-x64.msi) | MSI 엔터프라이즈 | 90.8 MB | `F3BAA369DC5E2F63389FB4E3FF5ED332787036F07E83F59513DA559B68755217` |
-| **Windows 64-bit** | [`RehearsePrompt-1.0.0-Windows-x64-portable.exe`](release/RehearsePrompt-1.0.0-Windows-x64-portable.exe) | 무설치 단일 파일 | 79.0 MB | `E5B2E9A2FF25A790FD300FA05EDA198E92CA378C0E14693841637A9326A23925` |
-| **macOS Apple Silicon** | `RehearsePrompt-1.0.0-macOS-arm64.dmg` | 디스크 이미지 | CI 빌드 | [GitHub Releases 참조](https://github.com/lij0825/RehearsePrompt/releases) |
-| **macOS Intel** | `RehearsePrompt-1.0.0-macOS-x64.dmg` | 디스크 이미지 | CI 빌드 | [GitHub Releases 참조](https://github.com/lij0825/RehearsePrompt/releases) |
+| **Windows 64-bit** | [`RehearsePrompt-1.0.0-Windows-x64-setup.exe`](https://github.com/lij0825/RehearsePrompt/releases/download/v1.0.0/RehearsePrompt-1.0.0-Windows-x64-setup.exe) | NSIS 인스톨러 | 79.2 MB | `133f3480a6fe2dcac8f1f4847371aeb536846683ec5e0847828e2baa6594e6e4` |
+| **Windows 64-bit** | [`RehearsePrompt-1.0.0-Windows-x64.msi`](https://github.com/lij0825/RehearsePrompt/releases/download/v1.0.0/RehearsePrompt-1.0.0-Windows-x64.msi) | MSI 엔터프라이즈 | 90.8 MB | `f43d2990dced0c20556702c9662020180d96d10c74edfd2ec96f7ec1e053d897` |
+| **Windows 64-bit** | [`RehearsePrompt-1.0.0-Windows-x64-portable.exe`](https://github.com/lij0825/RehearsePrompt/releases/download/v1.0.0/RehearsePrompt-1.0.0-Windows-x64-portable.exe) | 무설치 단일 파일 | 79.0 MB | `dad674bca4522efe57c2486f57691d9b728298065a71103e9d29dafe96ce41ff` |
+| **macOS Apple Silicon** | [`RehearsePrompt-1.0.0-macOS-arm64.dmg`](https://github.com/lij0825/RehearsePrompt/releases/download/v1.0.0/RehearsePrompt-1.0.0-macOS-arm64.dmg) | DMG 디스크 이미지 | 96.8 MB | `d0f3454e1d5c5f26b12146b8ea8d642ad2c11fd0245c1fe96220213fbfabd907` |
+| **macOS Intel** | [`RehearsePrompt-1.0.0-macOS-x64.dmg`](https://github.com/lij0825/RehearsePrompt/releases/download/v1.0.0/RehearsePrompt-1.0.0-macOS-x64.dmg) | DMG 디스크 이미지 | 101.5 MB | `af77d2766e55848d27883c80df9c71aacef9df24840229a1ce2be2efbccb2672` |
+
+> 🔒 **전체 체크섬 목록**: 변조 방지용 전체 SHA-256 목록은 [`SHA256SUMS.txt`](https://github.com/lij0825/RehearsePrompt/releases/download/v1.0.0/SHA256SUMS.txt)에서 확인 및 다운로드할 수 있습니다.
 
 ---
 
