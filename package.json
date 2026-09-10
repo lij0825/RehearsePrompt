@@ -34,6 +34,7 @@
     "verify:installers": "node ./scripts/verify-all-installers.mjs",
     "verify:installers:win": "powershell -ExecutionPolicy Bypass -File ./scripts/verify-windows-installers.ps1",
     "verify:installers:mac": "bash ./scripts/verify-macos-artifacts.sh",
+    "checklist": "node ./scripts/run-final-checklist.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
     "pack": "npm run build && electron-builder --dir",
