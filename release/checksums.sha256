@@ -1,0 +1,4 @@
+793C9E183504584759A1FEDBDD3BB9D01C0DFD526B994C5BB42FA5192A77776B  RehearsePrompt-1.0.0-Windows-x64-setup.exe
+C895BD154DEF72D9AD165C32F727DDF5F9678DAC2C50FBADEB9C6C94AE6B264A  RehearsePrompt-1.0.0-Windows-x64.msi
+# RehearsePrompt-1.0.0-macOS-arm64.dmg: CI에서 빌드 필요 (GitHub Actions macos-latest 러너)
+# RehearsePrompt-1.0.0-macOS-x64.dmg: CI에서 빌드 필요 (GitHub Actions macos-latest 러너)

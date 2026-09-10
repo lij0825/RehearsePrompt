@@ -1,0 +1,72 @@
+{
+  "appName": "RehearsePrompt",
+  "version": "1.0.0",
+  "buildDate": "2026-09-10T14:24:00.000Z",
+  "commitHash": "147fa5552b71658e3e4499ff4be9bbdafa9ff714",
+  "environment": {
+    "hostOS": "Windows 11 Pro (AMD64)",
+    "nodeVersion": "v22.20.0"
+  },
+  "artifacts": [
+    {
+      "appName": "RehearsePrompt",
+      "version": "1.0.0",
+      "buildDate": "2026-09-10T14:24:00.000Z",
+      "commitHash": "147fa5552b71658e3e4499ff4be9bbdafa9ff714",
+      "os": "Windows",
+      "arch": "x64",
+      "format": "NSIS Installer",
+      "filename": "RehearsePrompt-1.0.0-Windows-x64-setup.exe",
+      "fileSize": 83052478,
+      "sha256": "793C9E183504584759A1FEDBDD3BB9D01C0DFD526B994C5BB42FA5192A77776B",
+      "isSigned": false,
+      "isNotarized": false,
+      "testStatus": "PASSED"
+    },
+    {
+      "appName": "RehearsePrompt",
+      "version": "1.0.0",
+      "buildDate": "2026-09-10T14:24:00.000Z",
+      "commitHash": "147fa5552b71658e3e4499ff4be9bbdafa9ff714",
+      "os": "Windows",
+      "arch": "x64",
+      "format": "MSI Enterprise Package",
+      "filename": "RehearsePrompt-1.0.0-Windows-x64.msi",
+      "fileSize": 95223808,
+      "sha256": "C895BD154DEF72D9AD165C32F727DDF5F9678DAC2C50FBADEB9C6C94AE6B264A",
+      "isSigned": false,
+      "isNotarized": false,
+      "testStatus": "PASSED"
+    },
+    {
+      "appName": "RehearsePrompt",
+      "version": "1.0.0",
+      "buildDate": "2026-09-10T14:24:00.000Z",
+      "commitHash": "147fa5552b71658e3e4499ff4be9bbdafa9ff714",
+      "os": "macOS",
+      "arch": "arm64",
+      "format": "Apple Silicon DMG",
+      "filename": "RehearsePrompt-1.0.0-macOS-arm64.dmg",
+      "fileSize": 0,
+      "sha256": "CI에서 빌드 필요 (macos-latest 러너)",
+      "isSigned": false,
+      "isNotarized": false,
+      "testStatus": "CI에서 빌드 필요 (빈 파일 생성 방지 원칙 준수)"
+    },
+    {
+      "appName": "RehearsePrompt",
+      "version": "1.0.0",
+      "buildDate": "2026-09-10T14:24:00.000Z",
+      "commitHash": "147fa5552b71658e3e4499ff4be9bbdafa9ff714",
+      "os": "macOS",
+      "arch": "x64",
+      "format": "Intel DMG",
+      "filename": "RehearsePrompt-1.0.0-macOS-x64.dmg",
+      "fileSize": 0,
+      "sha256": "CI에서 빌드 필요 (macos-latest 러너)",
+      "isSigned": false,
+      "isNotarized": false,
+      "testStatus": "CI에서 빌드 필요 (빈 파일 생성 방지 원칙 준수)"
+    }
+  ]
+}

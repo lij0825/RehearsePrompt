@@ -16,6 +16,9 @@ release/builder-debug.yml
 release/latest*.yml
 !release/RELEASE_MANIFEST.json
 !release/SHA256SUMS.txt
+!release/manifest.json
+!release/checksums.sha256
+!release/*.md
 out/
 build/temp/
 
