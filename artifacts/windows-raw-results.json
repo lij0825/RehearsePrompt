@@ -1,0 +1,177 @@
+﻿[
+    {
+        "Category":  "NSIS",
+        "Name":  "파일 존재 및 크기 검증",
+        "Passed":  true,
+        "Details":  "79.21 MB",
+        "Timestamp":  "2026-09-10T21:47:42.0162806+09:00"
+    },
+    {
+        "Category":  "NSIS",
+        "Name":  "파일명 버전/아키텍처 규격",
+        "Passed":  true,
+        "Details":  "RehearsePrompt-1.0.0-Windows-x64-setup.exe",
+        "Timestamp":  "2026-09-10T21:47:42.0693608+09:00"
+    },
+    {
+        "Category":  "NSIS",
+        "Name":  "PE 실행 파일 구조 (MZ 헤더)",
+        "Passed":  true,
+        "Details":  "MZ 시그니처 일치",
+        "Timestamp":  "2026-09-10T21:47:42.1260961+09:00"
+    },
+    {
+        "Category":  "NSIS",
+        "Name":  "Authenticode 코드 서명 상태",
+        "Passed":  true,
+        "Details":  "상태: NotSigned (서명여부: False)",
+        "Timestamp":  "2026-09-10T21:47:42.7101939+09:00"
+    },
+    {
+        "Category":  "NSIS",
+        "Name":  "무인 사일런트 설치 종료 코드",
+        "Passed":  true,
+        "Details":  "ExitCode: 0",
+        "Timestamp":  "2026-09-10T21:47:55.9859908+09:00"
+    },
+    {
+        "Category":  "NSIS",
+        "Name":  "설치 파일 (RehearsePrompt.exe) 생성",
+        "Passed":  true,
+        "Details":  "C:\\Users\\이인준\\AppData\\Local\\Temp\\RehearsePrompt_NSIS_Verify_1356341668\\RehearsePrompt.exe",
+        "Timestamp":  "2026-09-10T21:47:55.9880731+09:00"
+    },
+    {
+        "Category":  "NSIS",
+        "Name":  "언인스톨러 (Uninstall RehearsePrompt.exe) 생성",
+        "Passed":  true,
+        "Details":  "C:\\Users\\이인준\\AppData\\Local\\Temp\\RehearsePrompt_NSIS_Verify_1356341668\\Uninstall RehearsePrompt.exe",
+        "Timestamp":  "2026-09-10T21:47:55.9911748+09:00"
+    },
+    {
+        "Category":  "NSIS",
+        "Name":  "PE FileVersion 일치",
+        "Passed":  true,
+        "Details":  "FileVersion: 1.0.0",
+        "Timestamp":  "2026-09-10T21:47:56.0026343+09:00"
+    },
+    {
+        "Category":  "NSIS",
+        "Name":  "PE ProductVersion 일치",
+        "Passed":  true,
+        "Details":  "ProductVersion: 1.0.0.0",
+        "Timestamp":  "2026-09-10T21:47:56.0068999+09:00"
+    },
+    {
+        "Category":  "NSIS",
+        "Name":  "PE ProductName 일치",
+        "Passed":  true,
+        "Details":  "ProductName: RehearsePrompt",
+        "Timestamp":  "2026-09-10T21:47:56.0152287+09:00"
+    },
+    {
+        "Category":  "NSIS",
+        "Name":  "PE LegalCopyright 확인",
+        "Passed":  true,
+        "Details":  "Copyright: Copyright © 2026 RehearsePrompt Team",
+        "Timestamp":  "2026-09-10T21:47:56.0178337+09:00"
+    },
+    {
+        "Category":  "NSIS",
+        "Name":  "시작 메뉴 및 바탕화면 바로가기 설정",
+        "Passed":  true,
+        "Details":  "StartMenu: True, Desktop: True",
+        "Timestamp":  "2026-09-10T21:47:56.2188632+09:00"
+    },
+    {
+        "Category":  "NSIS",
+        "Name":  "무단 원격 네트워크 요청 부재 (Zero-Telemetry)",
+        "Passed":  true,
+        "Details":  "외부 HTTP/소켓 통신 0건",
+        "Timestamp":  "2026-09-10T21:47:56.2763223+09:00"
+    },
+    {
+        "Category":  "NSIS",
+        "Name":  "내장 Chromium/WebView 엔진 파일 완전성",
+        "Passed":  true,
+        "Details":  "d3dcompiler, ffmpeg, v8 snapshot 확인",
+        "Timestamp":  "2026-09-10T21:47:56.3800817+09:00"
+    },
+    {
+        "Category":  "NSIS",
+        "Name":  "설치된 앱 실행 및 클린 셧다운",
+        "Passed":  true,
+        "Details":  "ExitCode: 0",
+        "Timestamp":  "2026-09-10T21:48:00.4059456+09:00"
+    },
+    {
+        "Category":  "NSIS",
+        "Name":  "앱 데이터 저장 및 재실행 후 복원",
+        "Passed":  true,
+        "Details":  "데이터 무결성 보존 확인",
+        "Timestamp":  "2026-09-10T21:48:03.4755357+09:00"
+    },
+    {
+        "Category":  "NSIS",
+        "Name":  "언인스톨러 실행 후 바이너리 완전 삭제",
+        "Passed":  true,
+        "Details":  "RehearsePrompt.exe 제거됨",
+        "Timestamp":  "2026-09-10T21:48:14.8601875+09:00"
+    },
+    {
+        "Category":  "MSI",
+        "Name":  "파일 존재 및 크기 검증",
+        "Passed":  true,
+        "Details":  "90.81 MB",
+        "Timestamp":  "2026-09-10T21:48:14.8685937+09:00"
+    },
+    {
+        "Category":  "MSI",
+        "Name":  "파일명 버전/아키텍처 규격",
+        "Passed":  true,
+        "Details":  "RehearsePrompt-1.0.0-Windows-x64.msi",
+        "Timestamp":  "2026-09-10T21:48:14.8712409+09:00"
+    },
+    {
+        "Category":  "MSI",
+        "Name":  "MSI OLE2 Compound Storage 헤더",
+        "Passed":  true,
+        "Details":  "0xD0CF11E0A1B11AE1 매직 바이트 확인",
+        "Timestamp":  "2026-09-10T21:48:14.9168785+09:00"
+    },
+    {
+        "Category":  "MSI",
+        "Name":  "Authenticode 코드 서명 상태",
+        "Passed":  true,
+        "Details":  "상태: NotSigned (서명여부: False)",
+        "Timestamp":  "2026-09-10T21:48:15.2774290+09:00"
+    },
+    {
+        "Category":  "Portable",
+        "Name":  "파일 존재 및 크기 검증",
+        "Passed":  true,
+        "Details":  "78.99 MB",
+        "Timestamp":  "2026-09-10T21:48:15.2826102+09:00"
+    },
+    {
+        "Category":  "Portable",
+        "Name":  "파일명 버전/아키텍처 규격",
+        "Passed":  true,
+        "Details":  "RehearsePrompt-1.0.0-Windows-x64-portable.exe",
+        "Timestamp":  "2026-09-10T21:48:15.2846923+09:00"
+    },
+    {
+        "Category":  "Portable",
+        "Name":  "PE 실행 파일 구조 (MZ 헤더)",
+        "Passed":  true,
+        "Details":  "MZ 시그니처 일치",
+        "Timestamp":  "2026-09-10T21:48:15.3180266+09:00"
+    },
+    {
+        "Category":  "Portable",
+        "Name":  "단독 실행 및 클린 셧다운",
+        "Passed":  true,
+        "Details":  "ExitCode: 0",
+        "Timestamp":  "2026-09-10T21:48:24.4384574+09:00"
+    }
+]

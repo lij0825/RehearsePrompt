@@ -1,0 +1,179 @@
+{
+  "summary": {
+    "total": 28,
+    "passed": 28,
+    "failed": 0,
+    "successRate": "100.0%",
+    "generatedAt": "2026-09-10T12:57:34.649Z"
+  },
+  "testCases": [
+    {
+      "category": "Common",
+      "name": "SemVer 버전 단일 진실 공급원 일치",
+      "passed": true,
+      "details": "package.json 버전 1.0.0"
+    },
+    {
+      "category": "Common",
+      "name": "화면 공유 감지 회피 API 부재 (Non-Circumvention)",
+      "passed": true,
+      "details": "위반 항목 0건 (완전 무결)"
+    },
+    {
+      "category": "Common",
+      "name": "원격 음성/대본 전송 및 텔레메트리 부재 (Zero-Telemetry)",
+      "passed": true,
+      "details": "100% 로컬 데이터 저장 (%APPDATA% / Application Support)"
+    },
+    {
+      "category": "NSIS",
+      "name": "파일 존재 및 크기 검증",
+      "passed": true,
+      "details": "79.21 MB"
+    },
+    {
+      "category": "NSIS",
+      "name": "파일명 버전/아키텍처 규격",
+      "passed": true,
+      "details": "RehearsePrompt-1.0.0-Windows-x64-setup.exe"
+    },
+    {
+      "category": "NSIS",
+      "name": "PE 실행 파일 구조 (MZ 헤더)",
+      "passed": true,
+      "details": "MZ 시그니처 일치"
+    },
+    {
+      "category": "NSIS",
+      "name": "Authenticode 코드 서명 상태",
+      "passed": true,
+      "details": "상태: NotSigned (서명여부: False)"
+    },
+    {
+      "category": "NSIS",
+      "name": "무인 사일런트 설치 종료 코드",
+      "passed": true,
+      "details": "ExitCode: 0"
+    },
+    {
+      "category": "NSIS",
+      "name": "설치 파일 (RehearsePrompt.exe) 생성",
+      "passed": true,
+      "details": "C:\\Users\\이인준\\AppData\\Local\\Temp\\RehearsePrompt_NSIS_Verify_1356341668\\RehearsePrompt.exe"
+    },
+    {
+      "category": "NSIS",
+      "name": "언인스톨러 (Uninstall RehearsePrompt.exe) 생성",
+      "passed": true,
+      "details": "C:\\Users\\이인준\\AppData\\Local\\Temp\\RehearsePrompt_NSIS_Verify_1356341668\\Uninstall RehearsePrompt.exe"
+    },
+    {
+      "category": "NSIS",
+      "name": "PE FileVersion 일치",
+      "passed": true,
+      "details": "FileVersion: 1.0.0"
+    },
+    {
+      "category": "NSIS",
+      "name": "PE ProductVersion 일치",
+      "passed": true,
+      "details": "ProductVersion: 1.0.0.0"
+    },
+    {
+      "category": "NSIS",
+      "name": "PE ProductName 일치",
+      "passed": true,
+      "details": "ProductName: RehearsePrompt"
+    },
+    {
+      "category": "NSIS",
+      "name": "PE LegalCopyright 확인",
+      "passed": true,
+      "details": "Copyright: Copyright © 2026 RehearsePrompt Team"
+    },
+    {
+      "category": "NSIS",
+      "name": "시작 메뉴 및 바탕화면 바로가기 설정",
+      "passed": true,
+      "details": "StartMenu: True, Desktop: True"
+    },
+    {
+      "category": "NSIS",
+      "name": "무단 원격 네트워크 요청 부재 (Zero-Telemetry)",
+      "passed": true,
+      "details": "외부 HTTP/소켓 통신 0건"
+    },
+    {
+      "category": "NSIS",
+      "name": "내장 Chromium/WebView 엔진 파일 완전성",
+      "passed": true,
+      "details": "d3dcompiler, ffmpeg, v8 snapshot 확인"
+    },
+    {
+      "category": "NSIS",
+      "name": "설치된 앱 실행 및 클린 셧다운",
+      "passed": true,
+      "details": "ExitCode: 0"
+    },
+    {
+      "category": "NSIS",
+      "name": "앱 데이터 저장 및 재실행 후 복원",
+      "passed": true,
+      "details": "데이터 무결성 보존 확인"
+    },
+    {
+      "category": "NSIS",
+      "name": "언인스톨러 실행 후 바이너리 완전 삭제",
+      "passed": true,
+      "details": "RehearsePrompt.exe 제거됨"
+    },
+    {
+      "category": "MSI",
+      "name": "파일 존재 및 크기 검증",
+      "passed": true,
+      "details": "90.81 MB"
+    },
+    {
+      "category": "MSI",
+      "name": "파일명 버전/아키텍처 규격",
+      "passed": true,
+      "details": "RehearsePrompt-1.0.0-Windows-x64.msi"
+    },
+    {
+      "category": "MSI",
+      "name": "MSI OLE2 Compound Storage 헤더",
+      "passed": true,
+      "details": "0xD0CF11E0A1B11AE1 매직 바이트 확인"
+    },
+    {
+      "category": "MSI",
+      "name": "Authenticode 코드 서명 상태",
+      "passed": true,
+      "details": "상태: NotSigned (서명여부: False)"
+    },
+    {
+      "category": "Portable",
+      "name": "파일 존재 및 크기 검증",
+      "passed": true,
+      "details": "78.99 MB"
+    },
+    {
+      "category": "Portable",
+      "name": "파일명 버전/아키텍처 규격",
+      "passed": true,
+      "details": "RehearsePrompt-1.0.0-Windows-x64-portable.exe"
+    },
+    {
+      "category": "Portable",
+      "name": "PE 실행 파일 구조 (MZ 헤더)",
+      "passed": true,
+      "details": "MZ 시그니처 일치"
+    },
+    {
+      "category": "Portable",
+      "name": "단독 실행 및 클린 셧다운",
+      "passed": true,
+      "details": "ExitCode: 0"
+    }
+  ]
+}

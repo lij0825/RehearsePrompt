@@ -1,0 +1,58 @@
+{
+  "appName": "RehearsePrompt",
+  "version": "1.0.0",
+  "buildDate": "2026-09-10T12:57:34.649Z",
+  "commitHash": "cff5153510c9bf429af93e73bd5d745844fbf921",
+  "environment": {
+    "hostOS": "win32",
+    "arch": "x64",
+    "nodeVersion": "v22.20.0"
+  },
+  "artifacts": [
+    {
+      "appName": "RehearsePrompt",
+      "version": "1.0.0",
+      "buildDate": "2026-09-10T12:57:34.649Z",
+      "commitHash": "cff5153510c9bf429af93e73bd5d745844fbf921",
+      "os": "Windows",
+      "arch": "x64",
+      "format": "NSIS Installer",
+      "filename": "RehearsePrompt-1.0.0-Windows-x64-setup.exe",
+      "fileSize": 83052478,
+      "sha256": "793C9E183504584759A1FEDBDD3BB9D01C0DFD526B994C5BB42FA5192A77776B",
+      "isSigned": false,
+      "isNotarized": false,
+      "testStatus": "PASSED"
+    },
+    {
+      "appName": "RehearsePrompt",
+      "version": "1.0.0",
+      "buildDate": "2026-09-10T12:57:34.649Z",
+      "commitHash": "cff5153510c9bf429af93e73bd5d745844fbf921",
+      "os": "Windows",
+      "arch": "x64",
+      "format": "MSI Enterprise",
+      "filename": "RehearsePrompt-1.0.0-Windows-x64.msi",
+      "fileSize": 95223808,
+      "sha256": "C895BD154DEF72D9AD165C32F727DDF5F9678DAC2C50FBADEB9C6C94AE6B264A",
+      "isSigned": false,
+      "isNotarized": false,
+      "testStatus": "PASSED"
+    },
+    {
+      "appName": "RehearsePrompt",
+      "version": "1.0.0",
+      "buildDate": "2026-09-10T12:57:34.649Z",
+      "commitHash": "cff5153510c9bf429af93e73bd5d745844fbf921",
+      "os": "Windows",
+      "arch": "x64",
+      "format": "Portable Executable",
+      "filename": "RehearsePrompt-1.0.0-Windows-x64-portable.exe",
+      "fileSize": 82829520,
+      "sha256": "5F89E2C53FF7B0C0348A2304A774795250193BF0DE9F2490B342CB4ADF3EE287",
+      "isSigned": false,
+      "isNotarized": false,
+      "testStatus": "PASSED"
+    }
+  ]
+}
