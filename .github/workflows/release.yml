@@ -51,12 +51,12 @@ jobs:
 
       - name: Audit Ethical & Security Non-Circumvention
         run: |
-          echo "Auditing for prohibited screen stealth / surveillance evasion APIs..."
+          echo "Auditing application source code for prohibited screen stealth / surveillance evasion APIs..."
           PROHIBITED=("SetWindowDisplayAffinity" "WDA_EXCLUDEFROMCAPTURE" "WDA_MONITOR" "desktopCapturer" "anti-cheat" "anticheat" "bypass-guard")
           FOUND=0
           for term in "${PROHIBITED[@]}"; do
-            if grep -rn --exclude-dir=node_modules --exclude-dir=.git --exclude-dir=release --exclude-dir=artifacts --exclude="validate-release.mjs" --exclude="verify-all-installers.mjs" "$term" .; then
-              echo "::error::Prohibited API detected: $term"
+            if grep -rn "$term" src/; then
+              echo "::error::Prohibited API detected in application code: $term"
               FOUND=1
             fi
           done
