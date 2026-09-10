@@ -49,6 +49,8 @@ export const PrompterView: React.FC<PrompterViewProps> = ({
   const speechServiceRef = useRef<SpeechService | null>(null);
   const audioMeterIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const autoScrollRafRef = useRef<number | null>(null);
+  const scrollPosRef = useRef<number>(0);
+  const currentSentenceIndexRef = useRef<number>(0);
 
   // 대본 문단 및 문장 구조화
   const structuredData = useMemo(() => {
@@ -84,6 +86,11 @@ export const PrompterView: React.FC<PrompterViewProps> = ({
     };
   }, [structuredData.allSentenceItems]);
 
+  // 현재 문장 인덱스 ref 최신화
+  useEffect(() => {
+    currentSentenceIndexRef.current = currentSentenceIndex;
+  }, [currentSentenceIndex]);
+
   // 문장으로 부드럽게 스크롤하는 함수 (상단 35% 시선 구역에 배치)
   const scrollToSentence = useCallback((index: number, smooth = true) => {
     const el = sentenceRefs.current[index];
@@ -95,20 +102,36 @@ export const PrompterView: React.FC<PrompterViewProps> = ({
 
     // 상단 35% 지점에 현재 문장이 오도록 계산
     const targetTop = elRect.top - containerRect.top + container.scrollTop - (containerRect.height * 0.35);
+    const clampedTop = Math.max(0, targetTop);
 
-    container.scrollTo({
-      top: Math.max(0, targetTop),
-      behavior: smooth ? 'smooth' : 'auto',
-    });
+    scrollPosRef.current = clampedTop;
+    if (smooth) {
+      container.scrollTo({
+        top: clampedTop,
+        behavior: 'smooth',
+      });
+    } else {
+      container.scrollTop = clampedTop;
+    }
   }, []);
 
-  // 현재 문장 인덱스 변경 시 스크롤 이동
+  // 특정 문장으로 즉시 점프 및 위치 동기화 (사용자 클릭 또는 수동 내비게이션 시)
+  const jumpToSentence = useCallback((index: number) => {
+    setCurrentSentenceIndex(index);
+    currentSentenceIndexRef.current = index;
+    scrollToSentence(index, false);
+    if (scrollMode === 'voice') {
+      speechServiceRef.current?.setAnchorSentenceIndex(index);
+    }
+  }, [scrollToSentence, scrollMode]);
+
+  // 음성 인식 모드일 때 현재 문장 인덱스 변경 시 스크롤 이동
   useEffect(() => {
-    if (countdown === null) {
+    if (countdown === null && scrollMode === 'voice') {
       scrollToSentence(currentSentenceIndex, true);
       speechServiceRef.current?.setAnchorSentenceIndex(currentSentenceIndex);
     }
-  }, [currentSentenceIndex, countdown, scrollToSentence]);
+  }, [currentSentenceIndex, countdown, scrollToSentence, scrollMode]);
 
   // 음성 인식 시작/정지 토글
   const startSpeechEngine = useCallback(async () => {
@@ -166,30 +189,61 @@ export const PrompterView: React.FC<PrompterViewProps> = ({
   useEffect(() => {
     if (scrollMode === 'constant' && isPlaying && countdown === null) {
       let lastTime = performance.now();
-      const pixelsPerSecond = (wpm / 130) * 45; // 130 WPM 기준 초당 45px 스크롤
+      // 130 WPM 기준 초당 45px 스크롤 (WPM 비례)
+      const pixelsPerSecond = (wpm / 130) * 45;
+
+      // 스크롤 시작 시 컨테이너의 현재 위치로 초기화
+      if (containerRef.current) {
+        scrollPosRef.current = containerRef.current.scrollTop;
+      }
 
       const step = (now: number) => {
         const delta = (now - lastTime) / 1000;
         lastTime = now;
 
-        if (containerRef.current) {
-          containerRef.current.scrollTop += pixelsPerSecond * delta;
+        // 탭 전환 등 지연 시 급격한 점프 방지 (최대 100ms 캡)
+        const safeDelta = Math.min(delta, 0.1);
 
-          // 현재 화면 상단 35%에 위치한 문장을 찾아 currentSentenceIndex 동기화
-          const containerRect = containerRef.current.getBoundingClientRect();
+        if (containerRef.current) {
+          const container = containerRef.current;
+
+          // 사용자의 마우스 휠 또는 스크롤바 조작 감지 시 위치 재동기화
+          if (Math.abs(container.scrollTop - scrollPosRef.current) > 6) {
+            scrollPosRef.current = container.scrollTop;
+          }
+
+          // 부동소수점 누적 스크롤 적용 (정수 절사로 인한 정지 방지)
+          scrollPosRef.current += pixelsPerSecond * safeDelta;
+          container.scrollTop = scrollPosRef.current;
+
+          // 대본 끝 도달 시 자동 정지
+          const maxScroll = Math.max(0, container.scrollHeight - container.clientHeight);
+          if (maxScroll > 0 && container.scrollTop >= maxScroll - 2) {
+            setIsPlaying(false);
+            return;
+          }
+
+          // 현재 화면 상단 35% 시선선에 위치한 문장을 찾아 하이라이트 동기화
+          const containerRect = container.getBoundingClientRect();
           const targetY = containerRect.top + containerRect.height * 0.35;
 
+          let matchedIndex = -1;
           for (let i = 0; i < sentenceRefs.current.length; i++) {
             const el = sentenceRefs.current[i];
             if (el) {
               const rect = el.getBoundingClientRect();
-              if (rect.top <= targetY && rect.bottom >= targetY) {
-                if (i !== currentSentenceIndex) {
-                  setCurrentSentenceIndex(i);
-                }
+              if (rect.top <= targetY && rect.bottom >= targetY - 12) {
+                matchedIndex = i;
                 break;
+              } else if (rect.top <= targetY) {
+                matchedIndex = i;
               }
             }
+          }
+
+          if (matchedIndex !== -1 && matchedIndex !== currentSentenceIndexRef.current) {
+            currentSentenceIndexRef.current = matchedIndex;
+            setCurrentSentenceIndex(matchedIndex);
           }
         }
 
@@ -201,16 +255,24 @@ export const PrompterView: React.FC<PrompterViewProps> = ({
       return () => {
         if (autoScrollRafRef.current) {
           cancelAnimationFrame(autoScrollRafRef.current);
+          autoScrollRafRef.current = null;
         }
       };
     }
-  }, [scrollMode, isPlaying, countdown, wpm, currentSentenceIndex]);
+  }, [scrollMode, isPlaying, countdown, wpm]);
 
   // 카운트다운 타이머
   useEffect(() => {
     if (countdown !== null && countdown > 0) {
       const timer = setTimeout(() => {
-        setCountdown((prev) => (prev !== null && prev > 1 ? prev - 1 : null));
+        setCountdown((prev) => {
+          if (prev !== null && prev > 1) {
+            return prev - 1;
+          }
+          // 3, 2, 1 카운트다운 완료 시 자동 재생 시작
+          setIsPlaying(true);
+          return null;
+        });
       }, 1000);
       return () => clearTimeout(timer);
     } else if (countdown === null && isPlaying) {
@@ -231,45 +293,56 @@ export const PrompterView: React.FC<PrompterViewProps> = ({
     }
   }, [scrollMode, isPlaying, countdown, startSpeechEngine, stopSpeechEngine]);
 
+  // 처음으로 되감기
+  const handleResetTop = useCallback(() => {
+    setCurrentSentenceIndex(0);
+    currentSentenceIndexRef.current = 0;
+    scrollPosRef.current = 0;
+    if (containerRef.current) {
+      containerRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+    if (scrollMode === 'voice') {
+      speechServiceRef.current?.setAnchorSentenceIndex(0);
+    }
+  }, [scrollMode]);
+
   // 일시정지 / 재생 토글
-  const togglePlay = () => {
+  const togglePlay = useCallback(() => {
     setIsPlaying((prev) => {
       const next = !prev;
+      if (next && containerRef.current) {
+        const maxScroll = Math.max(0, containerRef.current.scrollHeight - containerRef.current.clientHeight);
+        if (maxScroll > 0 && containerRef.current.scrollTop >= maxScroll - 5) {
+          handleResetTop();
+        }
+      }
       if (!next) {
         stopSpeechEngine();
       }
       return next;
     });
-  };
+  }, [handleResetTop, stopSpeechEngine]);
 
   // 문단 이동
-  const handlePrevParagraph = () => {
-    const currentItem = structuredData.allSentenceItems[currentSentenceIndex];
+  const handlePrevParagraph = useCallback(() => {
+    const currentItem = structuredData.allSentenceItems[currentSentenceIndexRef.current];
     if (!currentItem) return;
     const targetParaIdx = Math.max(0, currentItem.paragraphIndex - 1);
     const targetSentence = structuredData.allSentenceItems.find((it) => it.paragraphIndex === targetParaIdx);
     if (targetSentence) {
-      setCurrentSentenceIndex(targetSentence.sentenceIndex);
+      jumpToSentence(targetSentence.sentenceIndex);
     }
-  };
+  }, [structuredData.allSentenceItems, jumpToSentence]);
 
-  const handleNextParagraph = () => {
-    const currentItem = structuredData.allSentenceItems[currentSentenceIndex];
+  const handleNextParagraph = useCallback(() => {
+    const currentItem = structuredData.allSentenceItems[currentSentenceIndexRef.current];
     if (!currentItem) return;
     const targetParaIdx = Math.min(structuredData.renderedParagraphs.length - 1, currentItem.paragraphIndex + 1);
     const targetSentence = structuredData.allSentenceItems.find((it) => it.paragraphIndex === targetParaIdx);
     if (targetSentence) {
-      setCurrentSentenceIndex(targetSentence.sentenceIndex);
+      jumpToSentence(targetSentence.sentenceIndex);
     }
-  };
-
-  // 처음으로 되감기
-  const handleResetTop = () => {
-    setCurrentSentenceIndex(0);
-    if (containerRef.current) {
-      containerRef.current.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-  };
+  }, [structuredData.allSentenceItems, structuredData.renderedParagraphs.length, jumpToSentence]);
 
   // 키보드 조작 (Space, Esc, 방향키)
   useEffect(() => {
@@ -283,10 +356,12 @@ export const PrompterView: React.FC<PrompterViewProps> = ({
         onClose();
       } else if (e.code === 'ArrowUp') {
         e.preventDefault();
-        setCurrentSentenceIndex((prev) => Math.max(0, prev - 1));
+        const prevIdx = Math.max(0, currentSentenceIndexRef.current - 1);
+        jumpToSentence(prevIdx);
       } else if (e.code === 'ArrowDown') {
         e.preventDefault();
-        setCurrentSentenceIndex((prev) => Math.min(structuredData.allSentenceItems.length - 1, prev + 1));
+        const nextIdx = Math.min(structuredData.allSentenceItems.length - 1, currentSentenceIndexRef.current + 1);
+        jumpToSentence(nextIdx);
       } else if (e.key === ']' || e.key === '}') {
         e.preventDefault();
         setWpm((prev) => Math.min(240, prev + 10));
@@ -298,7 +373,7 @@ export const PrompterView: React.FC<PrompterViewProps> = ({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [togglePlay, onClose, stopSpeechEngine, structuredData.allSentenceItems.length]);
+  }, [togglePlay, onClose, stopSpeechEngine, jumpToSentence, structuredData.allSentenceItems.length]);
 
   return (
     <div style={{
@@ -591,8 +666,7 @@ export const PrompterView: React.FC<PrompterViewProps> = ({
                     key={item.sentenceIndex}
                     ref={(el) => { sentenceRefs.current[item.sentenceIndex] = el; }}
                     onClick={() => {
-                      // 수동 위치 오버라이드 클릭
-                      setCurrentSentenceIndex(item.sentenceIndex);
+                      jumpToSentence(item.sentenceIndex);
                     }}
                     style={{
                       display: 'inline',
