@@ -33,10 +33,10 @@ $hasAzure = (-not [string]::IsNullOrWhiteSpace($env:AZURE_KEY_VAULT_URI)) -and (
 
 if (-not $hasPfx -and -not $hasAzure) {
     Write-Host "`n>>> [MODE: TEST / UNSIGNED BUILD] <<<" -ForegroundColor Yellow
-    Write-Host "코드 서명 환경변수가 설정되지 않았습니다."
-    Write-Host "산출물은 '비서명 테스트용(Test/Unsigned)' 바이너리로 유지됩니다."
-    Write-Host "- 로컬 개발 및 내부 QA 검증용으로 정상 사용 가능합니다."
-    Write-Host "- 배포 시 Windows Defender SmartScreen에서 '추가 정보 -> 실행' 확인이 필요합니다."
+    Write-Host "Code signing environment variables are not set."
+    Write-Host "Output binaries are preserved as 'Unsigned Test Build'."
+    Write-Host "- Compatible for local development and internal QA verification."
+    Write-Host "- Distribution requires SmartScreen 'More Info -> Run Anyway' confirmation."
     Write-Host "========================================================`n"
     exit 0
 }

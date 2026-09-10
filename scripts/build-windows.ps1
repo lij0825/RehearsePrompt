@@ -38,5 +38,5 @@ Write-Host "`n[6/6] Generating Checksums & Verifying Artifacts..."
 & node "$PSScriptRoot\verify-artifacts.mjs"
 
 Write-Host "`n########################################################"
-Write-Host " [성공] Windows 전체 패키지 빌드 파이프라인 완료!        "
+Write-Host " [Success] Windows Complete Build Pipeline Finished!    "
 Write-Host "########################################################`n"
