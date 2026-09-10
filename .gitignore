@@ -1,0 +1,46 @@
+# Dependencies
+node_modules/
+package-lock.json.bak
+
+# Build and Packaging Outputs
+dist/
+dist-electron/
+release/*.exe
+release/*.msi
+release/*.dmg
+release/*.zip
+release/*.blockmap
+release/win-unpacked/
+release/mac/
+release/builder-debug.yml
+release/latest*.yml
+!release/RELEASE_MANIFEST.json
+!release/SHA256SUMS.txt
+out/
+build/temp/
+
+# Logs and Diagnostics
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+smoke-test-result.json
+
+# Environment Variables and Secrets
+.env
+.env.local
+.env.*.local
+*.pem
+*.pfx
+*.p12
+
+# OS and IDE Files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?

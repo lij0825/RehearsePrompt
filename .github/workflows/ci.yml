@@ -1,0 +1,84 @@
+name: Continuous Integration
+
+on:
+  push:
+    branches: [main, master, develop]
+  pull_request:
+    branches: [main, master, develop]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality-gate:
+    name: Code Quality & Test Suite
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js v22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Verify Version SSOT
+        run: node ./scripts/check-version.mjs
+
+      - name: Run TypeScript Strict Check
+        run: npm run typecheck
+
+      - name: Run Vitest Unit & Integration Tests
+        run: npm test
+
+      - name: Ethical & Security Non-Circumvention Audit
+        run: |
+          echo "Scanning for prohibited stealth/anti-cheat/anti-proctoring evasion APIs..."
+          PROHIBITED=("SetWindowDisplayAffinity" "WDA_EXCLUDEFROMCAPTURE" "WDA_MONITOR" "desktopCapturer" "anti-cheat" "anticheat" "bypass-guard")
+          FOUND=0
+          for term in "${PROHIBITED[@]}"; do
+            if grep -rn --exclude-dir=node_modules --exclude-dir=.git --exclude-dir=release --exclude="validate-release.mjs" "$term" .; then
+              echo "::error::Prohibited API or keyword detected: $term"
+              FOUND=1
+            fi
+          done
+          if [ $FOUND -ne 0 ]; then
+            echo "Security and ethics audit failed. Aborting build."
+            exit 1
+          fi
+          echo "Ethical non-circumvention check passed."
+
+      - name: Compile Application Bundles
+        run: npm run build
+
+  build-validation:
+    name: Build Verification (${{ matrix.os }})
+    needs: quality-gate
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest]
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js v22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Compile Application Bundles
+        run: npm run build
+
+      - name: Test Packaged Application (--dir)
+        run: npx electron-builder --dir

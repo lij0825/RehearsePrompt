@@ -1,0 +1,71 @@
+{
+  "name": "rehearse-prompt",
+  "version": "1.0.0",
+  "description": "모의 면접 및 발표 연습용 텔레프롬프터 데스크톱 앱",
+  "main": "dist-electron/main/main.cjs",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build:renderer": "vite build",
+    "build:electron": "vite build --config vite.config.electron.ts",
+    "build": "npm run build:renderer && npm run build:electron",
+    "start": "electron .",
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.electron.json --noEmit",
+    "check:env:win": "powershell -ExecutionPolicy Bypass -File ./scripts/check-environment.ps1",
+    "check:env:mac": "bash ./scripts/check-environment.sh",
+    "check:version": "node ./scripts/check-version.mjs",
+    "clean": "node ./scripts/clean-build.mjs",
+    "generate-icons": "powershell -ExecutionPolicy Bypass -File ./scripts/generate-icons.ps1",
+    "build:win:nsis": "powershell -ExecutionPolicy Bypass -File ./scripts/build-windows-nsis.ps1",
+    "build:win:msi": "powershell -ExecutionPolicy Bypass -File ./scripts/build-windows-msi.ps1",
+    "build:win:all": "powershell -ExecutionPolicy Bypass -File ./scripts/build-windows.ps1",
+    "build:mac:arm64": "bash ./scripts/build-macos-arm64.sh",
+    "build:mac:x64": "bash ./scripts/build-macos-x64.sh",
+    "build:mac:universal": "bash ./scripts/build-macos-universal.sh",
+    "build:mac:all": "bash ./scripts/build-macos.sh",
+    "sign:win": "powershell -ExecutionPolicy Bypass -File ./scripts/sign-windows.ps1",
+    "sign:mac": "bash ./scripts/sign-mac.sh",
+    "notarize:mac": "bash ./scripts/notarize-macos.sh",
+    "test:installers": "powershell -ExecutionPolicy Bypass -File ./scripts/test-installers.ps1",
+    "release:checksums": "node ./scripts/generate-checksums.mjs",
+    "release:verify": "node ./scripts/verify-artifacts.mjs",
+    "release:prepare": "node ./scripts/prepare-release.mjs",
+    "release:validate": "node ./scripts/validate-release.mjs",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "pack": "npm run build && electron-builder --dir",
+    "dist": "npm run build && electron-builder",
+    "dist:win": "npm run build && electron-builder --win",
+    "dist:mac": "npm run build && electron-builder --mac"
+  },
+  "keywords": [
+    "teleprompter",
+    "interview",
+    "presentation",
+    "rehearsal"
+  ],
+  "author": "RehearsePrompt Team",
+  "license": "MIT",
+  "homepage": "https://github.com/rehearseprompt/rehearse-prompt",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rehearseprompt/rehearse-prompt.git"
+  },
+  "dependencies": {
+    "clsx": "^2.1.1",
+    "lucide-react": "^1.16.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.0",
+    "@types/react": "^19.0.8",
+    "@types/react-dom": "^19.0.3",
+    "@vitejs/plugin-react": "^4.3.4",
+    "electron": "^34.2.0",
+    "electron-builder": "^26.15.3",
+    "typescript": "^5.7.3",
+    "vite": "^6.1.0",
+    "vitest": "^3.0.5"
+  }
+}

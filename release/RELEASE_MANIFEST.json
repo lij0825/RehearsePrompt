@@ -1,0 +1,66 @@
+﻿{
+    "productName":  "RehearsePrompt",
+    "generatedAt":  "2026-09-10T21:24:54.8685809+09:00",
+    "version":  "1.0.0",
+    "artifacts":  [
+                      {
+                          "sha256":  "793C9E183504584759A1FEDBDD3BB9D01C0DFD526B994C5BB42FA5192A77776B",
+                          "originalName":  "RehearsePrompt-Setup-1.0.0.exe",
+                          "sizeBytes":  83052478,
+                          "type":  "NSIS Installer",
+                          "standardName":  "RehearsePrompt-1.0.0-Windows-x64-setup.exe",
+                          "arch":  "x64",
+                          "os":  "Windows"
+                      },
+                      {
+                          "sha256":  "C895BD154DEF72D9AD165C32F727DDF5F9678DAC2C50FBADEB9C6C94AE6B264A",
+                          "originalName":  "RehearsePrompt-Setup-1.0.0.msi",
+                          "sizeBytes":  95223808,
+                          "type":  "MSI Enterprise Package",
+                          "standardName":  "RehearsePrompt-1.0.0-Windows-x64.msi",
+                          "arch":  "x64",
+                          "os":  "Windows"
+                      },
+                      {
+                          "sha256":  "5F89E2C53FF7B0C0348A2304A774795250193BF0DE9F2490B342CB4ADF3EE287",
+                          "originalName":  "RehearsePrompt-1.0.0-Portable.exe",
+                          "sizeBytes":  82829520,
+                          "type":  "Portable Standalone Executable",
+                          "standardName":  "RehearsePrompt-1.0.0-Windows-x64-portable.exe",
+                          "arch":  "x64",
+                          "os":  "Windows"
+                      },
+                      {
+                          "buildRunner":  "GitHub Actions macos-latest",
+                          "originalName":  "RehearsePrompt-1.0.0-arm64.dmg",
+                          "type":  "Apple Silicon Disk Image",
+                          "standardName":  "RehearsePrompt-1.0.0-macOS-arm64.dmg",
+                          "arch":  "arm64",
+                          "targetDarwin":  "aarch64-apple-darwin",
+                          "os":  "macOS"
+                      },
+                      {
+                          "buildRunner":  "GitHub Actions macos-latest",
+                          "originalName":  "RehearsePrompt-1.0.0-x64.dmg",
+                          "type":  "Intel Mac Disk Image",
+                          "standardName":  "RehearsePrompt-1.0.0-macOS-x64.dmg",
+                          "arch":  "x64",
+                          "targetDarwin":  "x86_64-apple-darwin",
+                          "os":  "macOS"
+                      }
+                  ],
+    "strategy":  {
+                     "windows":  {
+                                     "arm64_status":  "Emulation supported via Windows 11 on ARM Prism engine. Native ARM64 planned for future release.",
+                                     "tier1":  "x86_64-pc-windows-msvc (x64)"
+                                 },
+                     "macOS":  {
+                                   "strategySelected":  "Separate Binaries (Option A)",
+                                   "reason":  "50% smaller package size (~85MB vs ~170MB), zero lipo slice hash collision risks in Apple Notarytool, 90%+ Apple Silicon market focus.",
+                                   "targets":  [
+                                                   "aarch64-apple-darwin (arm64)",
+                                                   "x86_64-apple-darwin (x64)"
+                                               ]
+                               }
+                 }
+}

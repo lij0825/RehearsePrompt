@@ -1,0 +1,83 @@
+{
+  "appId": "com.rehearseprompt.app",
+  "productName": "RehearsePrompt",
+  "copyright": "Copyright © 2026 RehearsePrompt Team",
+  "directories": {
+    "output": "release",
+    "buildResources": "build"
+  },
+  "files": [
+    "dist/**",
+    "dist-electron/**",
+    "package.json"
+  ],
+  "win": {
+    "icon": "build/icon.ico",
+    "target": [
+      {
+        "target": "nsis",
+        "arch": ["x64"]
+      },
+      {
+        "target": "portable",
+        "arch": ["x64"]
+      }
+    ],
+    "artifactName": "${productName}-${version}-Windows-${arch}-setup.${ext}"
+  },
+  "portable": {
+    "artifactName": "${productName}-${version}-Windows-${arch}-portable.${ext}"
+  },
+  "msi": {
+    "artifactName": "${productName}-${version}-Windows-${arch}.${ext}"
+  },
+  "nsis": {
+    "oneClick": false,
+    "allowToChangeInstallationDirectory": true,
+    "createDesktopShortcut": true,
+    "createStartMenuShortcut": true,
+    "shortcutName": "RehearsePrompt",
+    "uninstallDisplayName": "RehearsePrompt"
+  },
+  "mac": {
+    "icon": "build/icon.icns",
+    "target": [
+      {
+        "target": "dmg",
+        "arch": ["arm64", "x64"]
+      },
+      {
+        "target": "zip",
+        "arch": ["arm64", "x64"]
+      }
+    ],
+    "category": "public.app-category.education",
+    "artifactName": "${productName}-${version}-macOS-${arch}.${ext}",
+    "hardenedRuntime": true,
+    "gatekeeperAssess": false,
+    "entitlements": "build/entitlements.mac.plist",
+    "entitlementsInherit": "build/entitlements.mac.plist",
+    "extendInfo": {
+      "NSMicrophoneUsageDescription": "음성 기반 자동 스크롤을 사용할 때만 마이크를 사용합니다. 음성 원본은 저장하지 않습니다."
+    }
+  },
+  "dmg": {
+    "contents": [
+      {
+        "x": 130,
+        "y": 220
+      },
+      {
+        "x": 410,
+        "y": 220,
+        "type": "link",
+        "path": "/Applications"
+      }
+    ]
+  },
+  "publish": {
+    "provider": "github",
+    "owner": "rehearseprompt",
+    "repo": "rehearse-prompt"
+  }
+}

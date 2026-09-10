@@ -1,0 +1,244 @@
+name: Cross-Platform Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry Run (do not publish official release)'
+        required: false
+        type: boolean
+        default: false
+      skip_signing:
+        description: 'Skip code signing and produce test-mode binaries'
+        required: false
+        type: boolean
+        default: false
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  validate-quality:
+    name: Pre-Release Quality Gate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js v22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Run Version SSOT Check
+        run: node ./scripts/check-version.mjs
+
+      - name: Run Strict TypeScript Check
+        run: npm run typecheck
+
+      - name: Run Vitest Suite (28 Tests)
+        run: npm test
+
+      - name: Audit Ethical & Security Non-Circumvention
+        run: |
+          echo "Scanning for prohibited evasion APIs..."
+          PROHIBITED=("SetWindowDisplayAffinity" "WDA_EXCLUDEFROMCAPTURE" "WDA_MONITOR" "desktopCapturer" "anti-cheat" "anticheat" "bypass-guard")
+          FOUND=0
+          for term in "${PROHIBITED[@]}"; do
+            if grep -rn --exclude-dir=node_modules --exclude-dir=.git --exclude-dir=release --exclude="validate-release.mjs" "$term" .; then
+              echo "::error::Prohibited API detected: $term"
+              FOUND=1
+            fi
+          done
+          if [ $FOUND -ne 0 ]; then
+            echo "Security audit failed."
+            exit 1
+          fi
+
+  build-windows:
+    name: Build & Package Windows (x64)
+    needs: validate-quality
+    runs-on: windows-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js v22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Install WiX Toolset
+        run: dotnet tool install --global wix
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Compile Application
+        run: npm run build
+
+      - name: Build Windows Installers (NSIS, MSI, Portable)
+        run: powershell -ExecutionPolicy Bypass -File ./scripts/build-windows.ps1
+
+      - name: Sign Binaries (Authenticode)
+        if: ${{ !inputs.skip_signing && env.WINDOWS_CERTIFICATE != '' }}
+        env:
+          WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE }}
+          WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
+          WINDOWS_TIMESTAMP_URL: ${{ secrets.WINDOWS_TIMESTAMP_URL || 'http://timestamp.digicert.com' }}
+        run: powershell -ExecutionPolicy Bypass -File ./scripts/sign-windows.ps1
+
+      - name: Generate Checksums & Verify Artifacts
+        run: |
+          node ./scripts/generate-checksums.mjs
+          node ./scripts/verify-artifacts.mjs
+
+      - name: Upload Windows Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-artifacts
+          path: |
+            release/*.exe
+            release/*.msi
+            release/RELEASE_MANIFEST.json
+            release/SHA256SUMS.txt
+          if-no-files-found: error
+
+  build-macos:
+    name: Build, Sign & Notarize macOS (arm64 & x64)
+    needs: validate-quality
+    runs-on: macos-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js v22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Compile Application
+        run: npm run build
+
+      - name: Setup Apple Developer ID Keychain
+        if: ${{ !inputs.skip_signing && env.APPLE_CERTIFICATE != '' }}
+        env:
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD || 'build-keychain-pass' }}
+        run: |
+          KEYCHAIN_PATH=$RUNNER_TEMP/build.keychain-db
+          echo "$APPLE_CERTIFICATE" | base64 --decode > $RUNNER_TEMP/certificate.p12
+          security create-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+          security set-keychain-settings -lut 21600 $KEYCHAIN_PATH
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+          security import $RUNNER_TEMP/certificate.p12 -k $KEYCHAIN_PATH -P "$APPLE_CERTIFICATE_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+          security list-keychains -d user -s $KEYCHAIN_PATH $(security list-keychains -d user | sed -e 's/^[ \t]*//' | tr -d '"')
+
+      - name: Build macOS DMGs (Apple Silicon arm64 & Intel x64)
+        run: |
+          chmod +x ./scripts/*.sh
+          ./scripts/build-macos.sh
+
+      - name: Notarize macOS Application Bundle
+        if: ${{ !inputs.skip_signing && env.APPLE_API_KEY != '' }}
+        env:
+          APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
+          APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
+          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+        run: ./scripts/notarize-macos.sh
+
+      - name: Upload macOS Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-artifacts
+          path: |
+            release/*.dmg
+            release/*.zip
+          if-no-files-found: warn
+
+  publish:
+    name: Publish Official Release
+    needs: [build-windows, build-macos]
+    runs-on: ubuntu-latest
+    if: ${{ !inputs.dry_run }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Download Windows Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: windows-artifacts
+          path: release-dist
+
+      - name: Download macOS Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: macos-artifacts
+          path: release-dist
+        continue-on-error: true
+
+      - name: Generate Consolidated Checksums
+        run: |
+          cd release-dist
+          sha256sum RehearsePrompt* > SHA256SUMS.txt || true
+          cat SHA256SUMS.txt
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: RehearsePrompt ${{ github.ref_name }}
+          draft: false
+          prerelease: false
+          files: |
+            release-dist/*
+          body: |
+            ## RehearsePrompt ${{ github.ref_name }}
+
+            모의 면접 및 발표 연습용 데스크톱 텔레프롬프터 공식 릴리스입니다.
+
+            ### 📦 다운로드 안내
+
+            | 운영체제 | 아키텍처 | 형식 | 권장 용도 |
+            |---|---|---|---|
+            | **Windows** | x64 (Intel/AMD) | `.exe` (NSIS) | 일반 개인 사용자용 기본 설치 파일 |
+            | **Windows** | x64 (Intel/AMD) | `.msi` (WiX) | 기업/기관 대량 배포용 패키지 |
+            | **Windows** | x64 (Intel/AMD) | `.exe` (Portable) | 무설치 단독 실행 파일 |
+            | **macOS** | arm64 (Apple Silicon) | `.dmg` | M1/M2/M3/M4 Mac 권장 파일 |
+            | **macOS** | x64 (Intel) | `.dmg` | Intel 기반 Mac 전용 파일 |
+
+            ### 🔒 보안 및 무결성 (SHA-256 Checksums)
+            공식 다운로드 파일의 무결성을 검증하려면 릴리스에 동봉된 `SHA256SUMS.txt`를 확인하십시오.
+
+            ```bash
+            # Windows PowerShell
+            Get-FileHash -Algorithm SHA256 <파일명>
+
+            # macOS / Linux
+            shasum -a 256 <파일명>
+            ```
+
+            ### ⚠️ 윤리 및 투명성 안내
+            RehearsePrompt는 면접 연습 및 발표 역량 강화를 위한 정직한 연습 도구입니다.
+            - 화면 공유 몰래 숨기기(`SetWindowDisplayAffinity`), 비공개 오버레이, 감독 우회 기능은 일체 제공하지 않습니다.
+            - 모든 대본 데이터는 사용자 로컬 PC에만 안전하게 저장되며 외부 서버로 전송되지 않습니다.
