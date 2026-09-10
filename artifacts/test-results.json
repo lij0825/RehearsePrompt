@@ -4,7 +4,7 @@
     "passed": 28,
     "failed": 0,
     "successRate": "100.0%",
-    "generatedAt": "2026-09-10T12:57:34.649Z"
+    "generatedAt": "2026-09-10T15:32:12.852Z"
   },
   "testCases": [
     {
@@ -29,7 +29,7 @@
       "category": "NSIS",
       "name": "파일 존재 및 크기 검증",
       "passed": true,
-      "details": "79.21 MB"
+      "details": "79.2 MB"
     },
     {
       "category": "NSIS",
@@ -59,13 +59,13 @@
       "category": "NSIS",
       "name": "설치 파일 (RehearsePrompt.exe) 생성",
       "passed": true,
-      "details": "C:\\Users\\이인준\\AppData\\Local\\Temp\\RehearsePrompt_NSIS_Verify_1356341668\\RehearsePrompt.exe"
+      "details": "C:\\Users\\이인준\\AppData\\Local\\Temp\\RehearsePrompt_NSIS_Verify_459884043\\RehearsePrompt.exe"
     },
     {
       "category": "NSIS",
       "name": "언인스톨러 (Uninstall RehearsePrompt.exe) 생성",
       "passed": true,
-      "details": "C:\\Users\\이인준\\AppData\\Local\\Temp\\RehearsePrompt_NSIS_Verify_1356341668\\Uninstall RehearsePrompt.exe"
+      "details": "C:\\Users\\이인준\\AppData\\Local\\Temp\\RehearsePrompt_NSIS_Verify_459884043\\Uninstall RehearsePrompt.exe"
     },
     {
       "category": "NSIS",

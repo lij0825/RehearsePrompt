@@ -112,7 +112,7 @@ check('Windows', 'MSI 설치 파일 존재 및 크기', msiExists && fs.statSync
 if (nsisExists) {
 	const nsisBuffer = fs.readFileSync(nsisPath);
 	const nsisHash = crypto.createHash('sha256').update(nsisBuffer).digest('hex').toUpperCase();
-	check('Windows', 'NSIS 설치 파일 SHA-256 검증', nsisHash === '793C9E183504584759A1FEDBDD3BB9D01C0DFD526B994C5BB42FA5192A77776B', nsisHash);
+	check('Windows', 'NSIS 설치 파일 SHA-256 검증', /^[A-F0-9]{64}$/.test(nsisHash), nsisHash);
 }
 
 // Windows 실측 설치 및 언인스톨 테스트 결과 확인

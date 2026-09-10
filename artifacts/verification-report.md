@@ -10,8 +10,8 @@
 | :--- | :--- |
 | **애플리케이션 명칭** | RehearsePrompt |
 | **릴리스 버전** | v1.0.0 |
-| **빌드 일시** | 2026-09-10T12:57:34.649Z |
-| **Git 커밋 해시** | `cff5153510c9bf429af93e73bd5d745844fbf921` |
+| **빌드 일시** | 2026-09-10T15:32:12.852Z |
+| **Git 커밋 해시** | `06028731361ecd948064f7f06d9de0788a5527d0` |
 | **검증 호스트 OS** | win32 (x64) |
 | **테스트 종합 결과** | **28/28 통과 (100.0%)** |
 
@@ -21,9 +21,9 @@
 
 | 운영체제 | 형식 | 파일명 | 파일 크기 | SHA-256 체크섬 | 서명 상태 | 테스트 상태 |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Windows** | NSIS Installer | `RehearsePrompt-1.0.0-Windows-x64-setup.exe` | 79.21 MB | `793C9E183504584759A1FEDBDD3BB9D01C0DFD526B994C5BB42FA5192A77776B` | 미서명(테스트용) | **PASSED** |
-| **Windows** | MSI Enterprise | `RehearsePrompt-1.0.0-Windows-x64.msi` | 90.81 MB | `C895BD154DEF72D9AD165C32F727DDF5F9678DAC2C50FBADEB9C6C94AE6B264A` | 미서명(테스트용) | **PASSED** |
-| **Windows** | Portable Executable | `RehearsePrompt-1.0.0-Windows-x64-portable.exe` | 78.99 MB | `5F89E2C53FF7B0C0348A2304A774795250193BF0DE9F2490B342CB4ADF3EE287` | 미서명(테스트용) | **PASSED** |
+| **Windows** | NSIS Installer | `RehearsePrompt-1.0.0-Windows-x64-setup.exe` | 79.20 MB | `F593A8871EAD80B9837EB7A287284DB8CBAC54F9D2F448589743AE760692E7BE` | 미서명(테스트용) | **PASSED** |
+| **Windows** | MSI Enterprise | `RehearsePrompt-1.0.0-Windows-x64.msi` | 90.81 MB | `F3BAA369DC5E2F63389FB4E3FF5ED332787036F07E83F59513DA559B68755217` | 미서명(테스트용) | **PASSED** |
+| **Windows** | Portable Executable | `RehearsePrompt-1.0.0-Windows-x64-portable.exe` | 78.99 MB | `E5B2E9A2FF25A790FD300FA05EDA198E92CA378C0E14693841637A9326A23925` | 미서명(테스트용) | **PASSED** |
 
 ---
 

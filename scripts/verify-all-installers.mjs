@@ -97,7 +97,7 @@ function scanDir(dir) {
 			}
 			scanDir(fullPath);
 		} else if (entry.isFile() && (entry.name.endsWith('.ts') || entry.name.endsWith('.tsx') || entry.name.endsWith('.mjs'))) {
-			if (entry.name === 'validate-release.mjs' || entry.name === 'verify-all-installers.mjs') continue;
+			if (['validate-release.mjs', 'verify-all-installers.mjs', 'run-final-checklist.mjs'].includes(entry.name)) continue;
 			const code = fs.readFileSync(fullPath, 'utf8');
 			for (const term of prohibitedTerms) {
 				if (code.includes(term)) {

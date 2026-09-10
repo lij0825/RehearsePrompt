@@ -15,7 +15,7 @@ Write-Host "========================================================"
 
 # 1. 렌더러 및 일렉트론 번들 컴파일
 Write-Host "-> [Step 1/3] Compiling React Renderer & Electron Main..."
-& npm run build
+& npm.cmd run build
 if ($LASTEXITCODE -ne 0) {
     Write-Error "애플리케이션 번들 컴파일에 실패했습니다."
     exit 1
@@ -23,7 +23,7 @@ if ($LASTEXITCODE -ne 0) {
 
 # 2. electron-builder 패키징 실행 (NSIS & Portable)
 Write-Host "`n-> [Step 2/3] Packaging NSIS Installer & Portable Executable..."
-& npx electron-builder --win nsis portable
+& npx.cmd electron-builder --win nsis portable
 if ($LASTEXITCODE -ne 0) {
     Write-Error "Windows NSIS/Portable 패키징에 실패했습니다."
     exit 1
