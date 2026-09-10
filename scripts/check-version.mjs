@@ -39,17 +39,28 @@ if (!semverRegex.test(version)) {
 console.log(`[확인] package.json 버전: ${version}`);
 
 // 인자 또는 환경변수로 전달된 타깃 버전/태그 검증
-const expectedVersion = process.argv[2] || process.env.EXPECTED_VERSION || process.env.GITHUB_REF_NAME;
+const rawTarget = process.argv[2] || process.env.EXPECTED_VERSION;
 
-if (expectedVersion) {
-	const cleanExpected = expectedVersion.replace(/^v/, '');
-	console.log(`[비교] 대상 기준 버전: ${cleanExpected}`);
+let targetVersion = rawTarget;
+if (!targetVersion && process.env.GITHUB_REF_TYPE === 'tag' && process.env.GITHUB_REF_NAME) {
+	targetVersion = process.env.GITHUB_REF_NAME;
+}
 
-	if (version !== cleanExpected) {
-		console.error(`[실패] 버전 불일치 감지! package.json (${version}) !== 타깃 버전 (${cleanExpected})`);
-		process.exit(1);
+if (targetVersion) {
+	// 버전 태그 형식(예: v1.0.0, 1.0.0)인지 확인. 브랜치명(main, develop 등)인 경우 버전 비교 생략
+	if (/^v?\d+/.test(targetVersion)) {
+		const cleanExpected = targetVersion.replace(/^v/, '');
+		console.log(`[비교] 대상 기준 버전: ${cleanExpected}`);
+
+		if (version !== cleanExpected) {
+			console.error(`[실패] 버전 불일치 감지! package.json (${version}) !== 타깃 버전 (${cleanExpected})`);
+			process.exit(1);
+		}
+		console.log('[성공] 버전 일치 확인 완료.');
+	} else {
+		console.log(`[안내] 대상 '${targetVersion}'은(는) 브랜치명이므로 버전 일치 비교를 생략하고 SemVer 유효성만 확인합니다.`);
+		console.log('[성공] 유효한 SemVer 버전 확인 완료.');
 	}
-	console.log('[성공] 버전 일치 확인 완료.');
 } else {
 	console.log('[성공] 유효한 SemVer 버전 확인 완료.');
 }
