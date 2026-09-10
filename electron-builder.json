@@ -77,7 +77,7 @@
   },
   "publish": {
     "provider": "github",
-    "owner": "rehearseprompt",
-    "repo": "rehearse-prompt"
+    "owner": "lij0825",
+    "repo": "RehearsePrompt"
   }
 }

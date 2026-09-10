@@ -29,7 +29,7 @@
 macOS의 Gatekeeper는 악성 소프트웨어로부터 Mac을 보호하기 위해 출처가 불분명하거나 변조된 소프트웨어의 실행을 엄격히 제한합니다.
 
 ### 3.1 공식 배포 경로 확인
-- 반드시 신뢰할 수 있는 공식 배포 경로([RehearsePrompt GitHub Releases](https://github.com/rehearseprompt/rehearse-prompt/releases))에서 제공하는 정식 릴리스 파일(`DMG`)을 다운로드해야 합니다.
+- 반드시 신뢰할 수 있는 공식 배포 경로([RehearsePrompt GitHub Releases](https://github.com/lij0825/RehearsePrompt/releases))에서 제공하는 정식 릴리스 파일(`DMG`)을 다운로드해야 합니다.
 - 출처가 확인되지 않은 제3자 사이트나 메신저를 통해 전달받은 설치 파일은 악성코드가 포함되어 있을 수 있으므로 절대 실행하지 마십시오.
 
 ### 3.2 개발 테스트용 미서명 앱 실행 안내

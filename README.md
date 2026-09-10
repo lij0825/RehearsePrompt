@@ -37,11 +37,11 @@ RehearsePrompt는 자신의 스피치 역량을 사전에 충실히 다지기 �
 
 | 운영체제 | 배포 파일 | 형식 | 파일 크기 | SHA-256 무결성 해시 |
 | :--- | :--- | :--- | :--- | :--- |
-| **Windows 64-bit** | [`RehearsePrompt-1.0.0-Windows-x64-setup.exe`](release/RehearsePrompt-1.0.0-Windows-x64-setup.exe) | NSIS 인스톨러 | 83.1 MB | `793C9E183504584759A1FEDBDD3BB9D01C0DFD526B994C5BB42FA5192A77776B` |
-| **Windows 64-bit** | [`RehearsePrompt-1.0.0-Windows-x64.msi`](release/RehearsePrompt-1.0.0-Windows-x64.msi) | MSI 엔터프라이즈 | 95.2 MB | `C895BD154DEF72D9AD165C32F727DDF5F9678DAC2C50FBADEB9C6C94AE6B264A` |
-| **Windows 64-bit** | [`RehearsePrompt-1.0.0-Windows-x64-portable.exe`](release/RehearsePrompt-1.0.0-Windows-x64-portable.exe) | 무설치 단일 파일 | 82.8 MB | `5F89E2C53FF7B0C0348A2304A774795250193BF0DE9F2490B342CB4ADF3EE287` |
-| **macOS Apple Silicon** | `RehearsePrompt-1.0.0-macOS-arm64.dmg` | 디스크 이미지 | CI 빌드 | [GitHub Releases 참조](https://github.com/rehearseprompt/rehearse-prompt/releases) |
-| **macOS Intel** | `RehearsePrompt-1.0.0-macOS-x64.dmg` | 디스크 이미지 | CI 빌드 | [GitHub Releases 참조](https://github.com/rehearseprompt/rehearse-prompt/releases) |
+| **Windows 64-bit** | [`RehearsePrompt-1.0.0-Windows-x64-setup.exe`](release/RehearsePrompt-1.0.0-Windows-x64-setup.exe) | NSIS 인스톨러 | 79.2 MB | `F593A8871EAD80B9837EB7A287284DB8CBAC54F9D2F448589743AE760692E7BE` |
+| **Windows 64-bit** | [`RehearsePrompt-1.0.0-Windows-x64.msi`](release/RehearsePrompt-1.0.0-Windows-x64.msi) | MSI 엔터프라이즈 | 90.8 MB | `F3BAA369DC5E2F63389FB4E3FF5ED332787036F07E83F59513DA559B68755217` |
+| **Windows 64-bit** | [`RehearsePrompt-1.0.0-Windows-x64-portable.exe`](release/RehearsePrompt-1.0.0-Windows-x64-portable.exe) | 무설치 단일 파일 | 79.0 MB | `E5B2E9A2FF25A790FD300FA05EDA198E92CA378C0E14693841637A9326A23925` |
+| **macOS Apple Silicon** | `RehearsePrompt-1.0.0-macOS-arm64.dmg` | 디스크 이미지 | CI 빌드 | [GitHub Releases 참조](https://github.com/lij0825/RehearsePrompt/releases) |
+| **macOS Intel** | `RehearsePrompt-1.0.0-macOS-x64.dmg` | 디스크 이미지 | CI 빌드 | [GitHub Releases 참조](https://github.com/lij0825/RehearsePrompt/releases) |
 
 ---
 

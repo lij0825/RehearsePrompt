@@ -92,7 +92,7 @@ RehearsePrompt는 민감한 인증서 및 비밀키를 코드 저장소에 절�
 3. 우측 하단의 **[실행]** 버튼을 클릭하여 정상 설치를 완료합니다.
 
 ### 7.2 보안 및 출처 확인 원칙 (필수 공지)
-- **공식 출처 확인**: 사용자는 반드시 공식 GitHub 저장소([https://github.com/rehearseprompt/rehearse-prompt](https://github.com/rehearseprompt/rehearse-prompt))의 릴리스 페이지에서 다운로드해야 합니다.
+- **공식 출처 확인**: 사용자는 반드시 공식 GitHub 저장소([https://github.com/lij0825/RehearsePrompt](https://github.com/lij0825/RehearsePrompt))의 릴리스 페이지에서 다운로드해야 합니다.
 - **체크섬 검증**: 다운로드한 파일이 변조되지 않았음을 확인하기 위해 PowerShell에서 해시를 대조하세요:
   ```powershell
   Get-FileHash .\RehearsePrompt-Setup-1.0.0.exe -Algorithm SHA256

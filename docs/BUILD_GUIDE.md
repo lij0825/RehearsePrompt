@@ -24,8 +24,8 @@
 
 ```bash
 # 1. 저장소 복제 (Clone)
-git clone https://github.com/rehearseprompt/rehearse-prompt.git
-cd rehearse-prompt
+git clone https://github.com/lij0825/RehearsePrompt.git
+cd RehearsePrompt
 
 # 2. 정확한 패키지 의존성 클린 설치 (Clean Install)
 npm ci

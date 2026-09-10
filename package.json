@@ -50,10 +50,10 @@
   ],
   "author": "RehearsePrompt Team",
   "license": "MIT",
-  "homepage": "https://github.com/rehearseprompt/rehearse-prompt",
+  "homepage": "https://github.com/lij0825/RehearsePrompt",
   "repository": {
     "type": "git",
-    "url": "https://github.com/rehearseprompt/rehearse-prompt.git"
+    "url": "https://github.com/lij0825/RehearsePrompt.git"
   },
   "dependencies": {
     "clsx": "^2.1.1",
