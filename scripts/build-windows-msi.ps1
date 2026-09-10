@@ -6,6 +6,7 @@
 #>
 
 $ErrorActionPreference = "Stop"
+$PSNativeCommandUseErrorActionPreference = $false
 $rootDir = Resolve-Path "$PSScriptRoot\.."
 $releaseDir = Join-Path $rootDir "release"
 
@@ -13,20 +14,24 @@ Write-Host "========================================================"
 Write-Host " [RehearsePrompt] Building Windows Enterprise MSI       "
 Write-Host "========================================================"
 
-# 1. Compile React renderer and Electron main
+# 1. Compile React renderer and Electron main (if not already built)
 Write-Host "-> [Step 1/3] Compiling React Renderer & Electron Main..."
-& npm.cmd run build
-if ($LASTEXITCODE -ne 0) {
-    Write-Error "Failed to compile application bundle."
-    exit 1
+if (-not (Test-Path "$rootDir\dist") -or -not (Test-Path "$rootDir\dist-electron")) {
+	& npm.cmd run build
+	if ($LASTEXITCODE -ne 0) {
+		Write-Error "Failed to compile application bundle."
+		exit 1
+	}
+} else {
+	Write-Host "   Application bundle already compiled. Skipping npm run build."
 }
 
 # 2. Package Windows Enterprise MSI
 Write-Host "`n-> [Step 2/3] Packaging Windows Enterprise MSI..."
-& npx.cmd electron-builder --win msi
+& npx.cmd electron-builder --win msi --publish never
 if ($LASTEXITCODE -ne 0) {
-    Write-Error "Windows MSI packaging failed."
-    exit 1
+	Write-Error "Windows MSI packaging failed."
+	exit 1
 }
 
 # 3. Verify MSI package integrity

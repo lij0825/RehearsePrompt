@@ -52,6 +52,9 @@ jobs:
         run: npm run build
 
       - name: Build Windows Installers (NSIS, MSI, Portable)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           if (Test-Path "src-tauri/Cargo.toml") {
             cargo tauri build --bundles nsis,msi

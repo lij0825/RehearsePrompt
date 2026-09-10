@@ -6,6 +6,7 @@
 #>
 
 $ErrorActionPreference = "Stop"
+$PSNativeCommandUseErrorActionPreference = $false
 
 Write-Host "########################################################"
 Write-Host " [RehearsePrompt] Windows Complete Build Pipeline       "
@@ -16,9 +17,14 @@ Write-Host "`n[1/6] Running Environment & Version Verification..."
 & "$PSScriptRoot\check-environment.ps1"
 & node "$PSScriptRoot\check-version.mjs"
 
-# 2. 아이콘 자산 생성
-Write-Host "`n[2/6] Generating Multi-Platform Icons..."
-& "$PSScriptRoot\generate-icons.ps1"
+# 2. 아이콘 자산 점검 (부재 시에만 생성)
+$icoFile = Join-Path $PSScriptRoot "..\build\icon.ico"
+if (-not (Test-Path $icoFile)) {
+	Write-Host "`n[2/6] Generating Multi-Platform Icons..."
+	& "$PSScriptRoot\generate-icons.ps1"
+} else {
+	Write-Host "`n[2/6] Icon assets already exist. Skipping icon generation."
+}
 
 # 3. Windows NSIS & Portable 패키징
 Write-Host "`n[3/6] Building NSIS & Portable Packages..."

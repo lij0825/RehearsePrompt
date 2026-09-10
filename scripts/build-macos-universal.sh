@@ -18,11 +18,21 @@ echo "[안내] Universal Binary는 arm64 및 x64 바이너리를 lipo로 병합�
 
 # 1. 컴파일
 echo "-> [Step 1/3] Compiling React Renderer & Electron Main..."
-npm run build
+if [[ ! -d "${ROOT_DIR}/dist" || ! -d "${ROOT_DIR}/dist-electron" ]]; then
+	npm run build
+else
+	echo "   Application bundle already compiled. Skipping npm run build."
+fi
 
 # 2. electron-builder 패키징 (universal 타깃)
 echo -e "\n-> [Step 2/3] Packaging Universal DMG..."
-npx electron-builder --mac dmg --universal
+EXTRA_ARGS=()
+if [[ -z "${CSC_LINK:-}" && -z "${APPLE_CERTIFICATE:-}" ]]; then
+	export CSC_IDENTITY_AUTO_DISCOVERY=false
+	EXTRA_ARGS+=("-c.mac.identity=null")
+fi
+
+npx electron-builder --mac dmg --universal --publish never "${EXTRA_ARGS[@]}"
 
 # 3. 무결성 및 결과물 검증
 echo -e "\n-> [Step 3/3] Verifying Universal Output Artifact..."
