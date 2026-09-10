@@ -1,0 +1,94 @@
+name: Build Windows Installers
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - 'release/**'
+      - 'feature/windows-packaging'
+
+jobs:
+  build-windows:
+    name: Package Windows (NSIS & MSI x64)
+    runs-on: windows-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js v22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Setup Rust Stable (MSVC Target)
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-msvc
+
+      - name: Cache Cargo Dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: cargo-win-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            cargo-win-
+
+      - name: Install WiX Toolset 4
+        run: dotnet tool install --global wix
+
+      - name: Install Node Dependencies
+        run: npm ci
+
+      - name: Verify Version SSOT
+        run: node ./scripts/check-version.mjs
+
+      - name: Compile Application
+        run: npm run build
+
+      - name: Build Windows Installers (NSIS, MSI, Portable)
+        run: |
+          if (Test-Path "src-tauri/Cargo.toml") {
+            cargo tauri build --bundles nsis,msi
+          } else {
+            powershell -ExecutionPolicy Bypass -File ./scripts/build-windows.ps1
+          }
+
+      - name: Code Signing (Authenticode)
+        if: env.WINDOWS_CERTIFICATE != ''
+        env:
+          WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE }}
+          WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
+          WINDOWS_TIMESTAMP_URL: ${{ secrets.WINDOWS_TIMESTAMP_URL || 'http://timestamp.digicert.com' }}
+        run: powershell -ExecutionPolicy Bypass -File ./scripts/sign-windows.ps1
+
+      - name: Validate Artifacts Non-Zero and Correct Naming
+        run: |
+          $nsis = Get-Item "release\RehearsePrompt-1.0.0-Windows-x64-setup.exe" -ErrorAction Stop
+          $msi = Get-Item "release\RehearsePrompt-1.0.0-Windows-x64.msi" -ErrorAction Stop
+          if ($nsis.Length -le 10MB -or $msi.Length -le 10MB) {
+            Write-Error "Release artifact size is invalid or 0 bytes!"
+            exit 1
+          }
+          Write-Host "Artifact size validation passed: NSIS ($($nsis.Length) bytes), MSI ($($msi.Length) bytes)"
+
+      - name: Generate Checksums & Verify Artifacts
+        run: |
+          node ./scripts/generate-checksums.mjs
+          node ./scripts/verify-artifacts.mjs
+
+      - name: Upload Windows Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-installers
+          path: |
+            release/*.exe
+            release/*.msi
+            release/RELEASE_MANIFEST.json
+            release/SHA256SUMS.txt
+          if-no-files-found: error

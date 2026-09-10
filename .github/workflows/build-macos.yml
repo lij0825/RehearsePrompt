@@ -1,0 +1,113 @@
+name: Build macOS Installers
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - 'release/**'
+      - 'feature/macos-packaging'
+
+jobs:
+  build-macos:
+    name: Package macOS (DMG arm64 & x64)
+    runs-on: macos-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Inspect Host Architecture
+        run: |
+          echo "Host Machine Architecture: $(uname -m)"
+          echo "macOS Kernel Version: $(uname -r)"
+
+      - name: Setup Node.js v22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Setup Rust Targets (Apple Silicon & Intel)
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin,x86_64-apple-darwin
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Verify Version SSOT
+        run: node ./scripts/check-version.mjs
+
+      - name: Compile Application
+        run: npm run build
+
+      - name: Setup Apple Developer ID Keychain (Conditional)
+        id: setup-keychain
+        if: env.APPLE_CERTIFICATE != ''
+        env:
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD || 'rehearse-build-keychain' }}
+        run: |
+          echo "Apple Certificate Secret detected. Configuring build keychain..."
+          KEYCHAIN_PATH=$RUNNER_TEMP/build.keychain-db
+          echo "$APPLE_CERTIFICATE" | base64 --decode > $RUNNER_TEMP/certificate.p12
+          security create-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+          security set-keychain-settings -lut 21600 $KEYCHAIN_PATH
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+          security import $RUNNER_TEMP/certificate.p12 -k $KEYCHAIN_PATH -P "$APPLE_CERTIFICATE_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+          security list-keychains -d user -s $KEYCHAIN_PATH $(security list-keychains -d user | sed -e 's/^[ \t]*//' | tr -d '"')
+
+      - name: Build macOS DMGs
+        run: |
+          chmod +x ./scripts/*.sh
+          if [ -f "src-tauri/Cargo.toml" ]; then
+            cargo tauri build --bundles dmg
+          else
+            ./scripts/build-macos.sh
+          fi
+
+      - name: Check Artifact File Sizes and Naming
+        run: |
+          DMGS=$(find release -maxdepth 1 -name "*.dmg")
+          if [ -z "$DMGS" ]; then
+            echo "::error::No DMG files generated in release/ directory!"
+            exit 1
+          fi
+          for dmg in $DMGS; do
+            size=$(wc -c < "$dmg" | tr -d ' ')
+            if [ "$size" -le 10485760 ]; then
+              echo "::error::DMG file $dmg is 0 or smaller than 10MB ($size bytes)!"
+              exit 1
+            fi
+            echo "Verified DMG: $dmg ($((size / 1024 / 1024)) MB)"
+          done
+
+      - name: Notarize macOS Application (Conditional)
+        if: env.APPLE_API_KEY != '' || env.APPLE_APP_SPECIFIC_PASSWORD != ''
+        env:
+          APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
+          APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
+          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: ./scripts/notarize-macos.sh
+
+      - name: Classify as Unsigned Build if Secrets Missing
+        if: env.APPLE_CERTIFICATE == ''
+        run: |
+          echo "Notice: No Apple Signing Secrets found. Classifying artifacts as Unsigned Test Builds."
+
+      - name: Generate Checksums
+        run: |
+          node ./scripts/generate-checksums.mjs
+
+      - name: Upload macOS Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-installers
+          path: |
+            release/*.dmg
+            release/*.zip
+          if-no-files-found: error

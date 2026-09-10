@@ -1,4 +1,4 @@
-name: Cross-Platform Release
+name: Official Release Pipeline
 
 on:
   push:
@@ -7,12 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       dry_run:
-        description: 'Dry Run (do not publish official release)'
-        required: false
-        type: boolean
-        default: false
-      skip_signing:
-        description: 'Skip code signing and produce test-mode binaries'
+        description: 'Dry Run (verify builds without publishing release)'
         required: false
         type: boolean
         default: false
@@ -39,11 +34,14 @@ jobs:
           node-version: 22
           cache: 'npm'
 
-      - name: Install Dependencies
+      - name: Setup Rust Stable
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install Node Dependencies
         run: npm ci
 
-      - name: Run Version SSOT Check
-        run: node ./scripts/check-version.mjs
+      - name: Run Version SSOT & Tag Match Check
+        run: node ./scripts/check-version.mjs ${{ github.ref_name }}
 
       - name: Run Strict TypeScript Check
         run: npm run typecheck
@@ -53,11 +51,11 @@ jobs:
 
       - name: Audit Ethical & Security Non-Circumvention
         run: |
-          echo "Scanning for prohibited evasion APIs..."
+          echo "Auditing for prohibited screen stealth / surveillance evasion APIs..."
           PROHIBITED=("SetWindowDisplayAffinity" "WDA_EXCLUDEFROMCAPTURE" "WDA_MONITOR" "desktopCapturer" "anti-cheat" "anticheat" "bypass-guard")
           FOUND=0
           for term in "${PROHIBITED[@]}"; do
-            if grep -rn --exclude-dir=node_modules --exclude-dir=.git --exclude-dir=release --exclude="validate-release.mjs" "$term" .; then
+            if grep -rn --exclude-dir=node_modules --exclude-dir=.git --exclude-dir=release --exclude-dir=artifacts --exclude="validate-release.mjs" --exclude="verify-all-installers.mjs" "$term" .; then
               echo "::error::Prohibited API detected: $term"
               FOUND=1
             fi
@@ -68,7 +66,7 @@ jobs:
           fi
 
   build-windows:
-    name: Build & Package Windows (x64)
+    name: Build Windows Artifacts (x64)
     needs: validate-quality
     runs-on: windows-latest
     steps:
@@ -81,6 +79,11 @@ jobs:
           node-version: 22
           cache: 'npm'
 
+      - name: Setup Rust Stable (MSVC)
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-msvc
+
       - name: Install WiX Toolset
         run: dotnet tool install --global wix
 
@@ -90,16 +93,35 @@ jobs:
       - name: Compile Application
         run: npm run build
 
-      - name: Build Windows Installers (NSIS, MSI, Portable)
-        run: powershell -ExecutionPolicy Bypass -File ./scripts/build-windows.ps1
+      - name: Build Windows Installers
+        run: |
+          if (Test-Path "src-tauri/Cargo.toml") {
+            cargo tauri build --bundles nsis,msi
+          } else {
+            powershell -ExecutionPolicy Bypass -File ./scripts/build-windows.ps1
+          }
 
       - name: Sign Binaries (Authenticode)
-        if: ${{ !inputs.skip_signing && env.WINDOWS_CERTIFICATE != '' }}
+        if: env.WINDOWS_CERTIFICATE != ''
         env:
           WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE }}
           WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
           WINDOWS_TIMESTAMP_URL: ${{ secrets.WINDOWS_TIMESTAMP_URL || 'http://timestamp.digicert.com' }}
         run: powershell -ExecutionPolicy Bypass -File ./scripts/sign-windows.ps1
+
+      - name: Check Artifact File Sizes (Fail if 0 bytes)
+        run: |
+          $files = Get-ChildItem -Path "release" -Include "*.exe","*.msi" -Recurse
+          if ($files.Count -eq 0) {
+            Write-Error "No Windows release files found!"
+            exit 1
+          }
+          foreach ($f in $files) {
+            if ($f.Length -le 10MB) {
+              Write-Error "File $($f.Name) is smaller than 10MB or 0 bytes!"
+              exit 1
+            }
+          }
 
       - name: Generate Checksums & Verify Artifacts
         run: |
@@ -109,7 +131,7 @@ jobs:
       - name: Upload Windows Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: windows-artifacts
+          name: windows-release-artifacts
           path: |
             release/*.exe
             release/*.msi
@@ -118,7 +140,7 @@ jobs:
           if-no-files-found: error
 
   build-macos:
-    name: Build, Sign & Notarize macOS (arm64 & x64)
+    name: Build macOS Artifacts (arm64 & x64)
     needs: validate-quality
     runs-on: macos-latest
     steps:
@@ -131,18 +153,23 @@ jobs:
           node-version: 22
           cache: 'npm'
 
+      - name: Setup Rust Targets
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin,x86_64-apple-darwin
+
       - name: Install Dependencies
         run: npm ci
 
       - name: Compile Application
         run: npm run build
 
-      - name: Setup Apple Developer ID Keychain
-        if: ${{ !inputs.skip_signing && env.APPLE_CERTIFICATE != '' }}
+      - name: Setup Apple Developer ID Keychain (Conditional)
+        if: env.APPLE_CERTIFICATE != ''
         env:
           APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
           APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
-          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD || 'build-keychain-pass' }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD || 'rehearse-build-keychain' }}
         run: |
           KEYCHAIN_PATH=$RUNNER_TEMP/build.keychain-db
           echo "$APPLE_CERTIFICATE" | base64 --decode > $RUNNER_TEMP/certificate.p12
@@ -153,30 +180,52 @@ jobs:
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
           security list-keychains -d user -s $KEYCHAIN_PATH $(security list-keychains -d user | sed -e 's/^[ \t]*//' | tr -d '"')
 
-      - name: Build macOS DMGs (Apple Silicon arm64 & Intel x64)
+      - name: Build macOS DMGs
         run: |
           chmod +x ./scripts/*.sh
-          ./scripts/build-macos.sh
+          if [ -f "src-tauri/Cargo.toml" ]; then
+            cargo tauri build --bundles dmg
+          else
+            ./scripts/build-macos.sh
+          fi
 
-      - name: Notarize macOS Application Bundle
-        if: ${{ !inputs.skip_signing && env.APPLE_API_KEY != '' }}
+      - name: Notarize macOS Bundle (Conditional)
+        if: env.APPLE_API_KEY != '' || env.APPLE_APP_SPECIFIC_PASSWORD != ''
         env:
           APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
           APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
           APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: ./scripts/notarize-macos.sh
+
+      - name: Check macOS Artifact Sizes (Fail if 0 bytes)
+        run: |
+          DMGS=$(find release -maxdepth 1 -name "*.dmg")
+          if [ -z "$DMGS" ]; then
+            echo "::error::No DMG files generated!"
+            exit 1
+          fi
+          for dmg in $DMGS; do
+            size=$(wc -c < "$dmg" | tr -d ' ')
+            if [ "$size" -le 10485760 ]; then
+              echo "::error::File $dmg size is invalid ($size bytes)!"
+              exit 1
+            fi
+          done
 
       - name: Upload macOS Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: macos-artifacts
+          name: macos-release-artifacts
           path: |
             release/*.dmg
             release/*.zip
           if-no-files-found: warn
 
   publish:
-    name: Publish Official Release
+    name: Publish Official GitHub Release
     needs: [build-windows, build-macos]
     runs-on: ubuntu-latest
     if: ${{ !inputs.dry_run }}
@@ -187,23 +236,30 @@ jobs:
       - name: Download Windows Artifacts
         uses: actions/download-artifact@v4
         with:
-          name: windows-artifacts
-          path: release-dist
+          name: windows-release-artifacts
+          path: dist-release
 
       - name: Download macOS Artifacts
         uses: actions/download-artifact@v4
         with:
-          name: macos-artifacts
-          path: release-dist
+          name: macos-release-artifacts
+          path: dist-release
         continue-on-error: true
 
-      - name: Generate Consolidated Checksums
+      - name: Verify All Artifacts Present & Non-Zero
         run: |
-          cd release-dist
-          sha256sum RehearsePrompt* > SHA256SUMS.txt || true
+          cd dist-release
+          ls -la
+          # Verify at least one setup.exe and msi exists
+          if [ ! -f RehearsePrompt*setup.exe ] || [ ! -f RehearsePrompt*.msi ]; then
+            echo "::error::Required release installers are missing!"
+            exit 1
+          fi
+          # Generate Consolidated SHA-256 Sums
+          sha256sum RehearsePrompt* > SHA256SUMS.txt
           cat SHA256SUMS.txt
 
-      - name: Create GitHub Release
+      - name: Create Official GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_name }}
@@ -211,7 +267,7 @@ jobs:
           draft: false
           prerelease: false
           files: |
-            release-dist/*
+            dist-release/*
           body: |
             ## RehearsePrompt ${{ github.ref_name }}
 
@@ -219,16 +275,16 @@ jobs:
 
             ### 📦 다운로드 안내
 
-            | 운영체제 | 아키텍처 | 형식 | 권장 용도 |
+            | 운영체제 | 형식 | 아키텍처 | 설명 |
             |---|---|---|---|
-            | **Windows** | x64 (Intel/AMD) | `.exe` (NSIS) | 일반 개인 사용자용 기본 설치 파일 |
-            | **Windows** | x64 (Intel/AMD) | `.msi` (WiX) | 기업/기관 대량 배포용 패키지 |
-            | **Windows** | x64 (Intel/AMD) | `.exe` (Portable) | 무설치 단독 실행 파일 |
-            | **macOS** | arm64 (Apple Silicon) | `.dmg` | M1/M2/M3/M4 Mac 권장 파일 |
-            | **macOS** | x64 (Intel) | `.dmg` | Intel 기반 Mac 전용 파일 |
+            | **Windows** | `.exe` (NSIS) | x64 (Intel/AMD) | 일반 개인 사용자용 기본 설치 프로그램 |
+            | **Windows** | `.msi` (WiX) | x64 (Intel/AMD) | 기업/기관 대량 배포용 패키지 |
+            | **Windows** | `.exe` (Portable) | x64 (Intel/AMD) | 관리자 권한 없는 무설치 단일 실행 파일 |
+            | **macOS** | `.dmg` | arm64 (Apple Silicon) | M1/M2/M3/M4 Mac 전용 |
+            | **macOS** | `.dmg` | x64 (Intel) | Intel Mac 전용 |
 
-            ### 🔒 보안 및 무결성 (SHA-256 Checksums)
-            공식 다운로드 파일의 무결성을 검증하려면 릴리스에 동봉된 `SHA256SUMS.txt`를 확인하십시오.
+            ### 🔒 무결성 검증 (SHA-256 Checksums)
+            변조 방지를 위해 다운로드한 파일의 SHA-256 해시를 릴리스에 동봉된 `SHA256SUMS.txt`와 비교하십시오.
 
             ```bash
             # Windows PowerShell
@@ -238,7 +294,14 @@ jobs:
             shasum -a 256 <파일명>
             ```
 
-            ### ⚠️ 윤리 및 투명성 안내
-            RehearsePrompt는 면접 연습 및 발표 역량 강화를 위한 정직한 연습 도구입니다.
-            - 화면 공유 몰래 숨기기(`SetWindowDisplayAffinity`), 비공개 오버레이, 감독 우회 기능은 일체 제공하지 않습니다.
-            - 모든 대본 데이터는 사용자 로컬 PC에만 안전하게 저장되며 외부 서버로 전송되지 않습니다.
+            ### 📚 사용자 가이드 바로가기
+            - [5분 빠른 시작 가이드 (QUICK_START_KO.md)](docs/QUICK_START_KO.md)
+            - [Windows 설치 가이드 (INSTALL_WINDOWS_KO.md)](docs/INSTALL_WINDOWS_KO.md)
+            - [macOS 설치 가이드 (INSTALL_MACOS_KO.md)](docs/INSTALL_MACOS_KO.md)
+            - [종합 사용자 설명서 (USER_GUIDE_KO.md)](docs/USER_GUIDE_KO.md)
+            - [문제 해결 가이드 (TROUBLESHOOTING_KO.md)](docs/TROUBLESHOOTING_KO.md)
+            - [개인정보 및 권한 정책 (PRIVACY_AND_PERMISSIONS_KO.md)](docs/PRIVACY_AND_PERMISSIONS_KO.md)
+            - [화면 공유 투명성 고지 (SCREEN_SHARING_NOTICE_KO.md)](docs/SCREEN_SHARING_NOTICE_KO.md)
+
+            ---
+            *RehearsePrompt는 화면 공유 숨김 기능이나 시험 감독 우회 API를 일체 포함하지 않는 정직한 연습 도구입니다.*
