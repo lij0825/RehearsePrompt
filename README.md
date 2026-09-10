@@ -47,15 +47,27 @@ RehearsePrompt는 자신의 스피치 역량을 사전에 충실히 다지기 �
 
 ## 📚 기술 문서 및 사용자 가이드 (Documentation)
 
+### 🇰🇷 일반 사용자를 위한 친절한 한국어 안내서
+| 문서 구분 | 바로가기 링크 | 주요 내용 |
+| :--- | :--- | :--- |
+| ⚡ **빠른 시작** | [5분 빠른 시작 가이드](docs/QUICK_START_KO.md) | 첫 실행, 첫 대본 작성, 프롬프터 모드, 연습 시작 및 세션 결과 확인 |
+| 📖 **사용 설명서** | [종합 사용자 설명서](docs/USER_GUIDE_KO.md) | 대본 관리, 음성 인식 스크롤, STAR 기법 연습, WPM 속도 조절, 단축키 일람 |
+| 🪟 **Windows 설치** | [Windows 설치 가이드](docs/INSTALL_WINDOWS_KO.md) | 설치 프로그램/포터블/MSI 선택, SmartScreen 파란 창 대처, 마이크 권한 |
+| 🍏 **macOS 설치** | [macOS 설치 가이드](docs/INSTALL_MACOS_KO.md) | Apple Silicon/Intel DMG 선택, Gatekeeper "확인되지 않은 개발자" 대처, 권한 설정 |
+| 💡 **문제 해결** | [문제 해결 가이드](docs/TROUBLESHOOTING_KO.md) | 마이크 미인식, 음성 스크롤 추적 지연, 고DPI 흐림, 백신 오탐 대처법 |
+| 🛡️ **개인정보/권한** | [개인정보 및 권한 정책](docs/PRIVACY_AND_PERMISSIONS_KO.md) | 100% 로컬 저장 원칙, 오디오/비디오 파일 미저장 선언, 제로 텔레메트리 |
+| 📢 **화면 공유 고지** | [화면 공유 투명성 안내](docs/SCREEN_SHARING_NOTICE_KO.md) | 화면 공유 감추기 없음, 노출 가능성 및 시험/면접 규정 준수 고지 |
+
+### 🛠️ 엔지니어링 및 개발자 문서 (Technical Docs)
 | 구분 | 문서 링크 | 핵심 내용 |
 | :--- | :--- | :--- |
 | 🛠️ **개발자** | [개발자 빌드 가이드](docs/BUILD_GUIDE.md) | Node 22 환경 구축, 빌드 스크립트, 테스트 실행, 패키징 절차 |
-| 🪟 **사용자** | [Windows 설치 가이드](docs/INSTALL_WINDOWS.md) | 인스톨러/포터블/MSI 설치법, SmartScreen 경고 우회, 마이크 권한 |
-| 🍏 **사용자** | [macOS 설치 가이드](docs/INSTALL_MACOS.md) | DMG 설치법, 보안 컴플라이언스(Gatekeeper), TCC 마이크 승인 |
+| 🪟 **사용자** | [Windows 설치 가이드 (영문)](docs/INSTALL_WINDOWS.md) | 인스톨러/포터블/MSI 설치법, SmartScreen 경고 우회, 마이크 권한 |
+| 🍏 **사용자** | [macOS 설치 가이드 (영문)](docs/INSTALL_MACOS.md) | DMG 설치법, 보안 컴플라이언스(Gatekeeper), TCC 마이크 승인 |
 | 🍏 **배포** | [macOS 릴리스 가이드](docs/MACOS_RELEASE_GUIDE.md) | DMG/ZIP 아키텍처(Apple Silicon/Intel), Notarytool 공증, 22개 QA 검증 |
 | 🏛️ **아키텍처** | [아키텍처 지원 전략](docs/ARCHITECTURE_STRATEGY.md) | Windows x64/ARM64, macOS 별도 파일 vs Universal, 명명 규칙 |
-| 📖 **사용자** | [앱 사용 설명서](docs/USER_GUIDE.md) | 대본 작성, WPM/음성 스크롤, 단축키 매뉴얼, 시선 유도선 활용 |
-| 💡 **운영** | [문제 해결 가이드](docs/TROUBLESHOOTING.md) | 마이크 미인식, 음성 인식 불일치, DPI 흐림, 백신 오탐 대처 |
+| 📖 **사용자** | [앱 사용 설명서 (영문)](docs/USER_GUIDE.md) | 대본 작성, WPM/음성 스크롤, 단축키 매뉴얼, 시선 유도선 활용 |
+| 💡 **운영** | [문제 해결 가이드 (영문)](docs/TROUBLESHOOTING.md) | 마이크 미인식, 음성 인식 불일치, DPI 흐림, 백신 오탐 대처 |
 | 🛡️ **정책** | [권한 및 개인정보 보호](docs/PRIVACY_AND_PERMISSIONS.md) | 로컬 저장 정책, 음성 데이터 미저장 선언, 캡처 투명성 규정 |
 | 🔏 **보안** | [Windows 코드 서명 가이드](docs/WINDOWS_CODE_SIGNING.md) | Authenticode, EV/OV, Azure Key Vault, SmartScreen 평판 관리 |
 | 🔏 **보안** | [macOS 코드 서명 및 공증](docs/MACOS_CODE_SIGNING.md) | Developer ID, Notarytool, Stapler, App Store Connect API Key |
