@@ -19,6 +19,19 @@ import {
   Sliders,
 } from 'lucide-react';
 
+/**
+ * 문장 어절 및 글자 수와 WPM에 기반한 발화 소요 시간(초) 산출
+ */
+export function calculateSentenceDurationSec(sentence: string, wpm: number): number {
+  const trimmed = sentence.trim();
+  if (!trimmed) return 2.0;
+  const words = trimmed.split(/\s+/).length;
+  const chars = trimmed.length;
+  const effectiveWords = Math.max(words, Math.ceil(chars / 4), 2);
+  const safeWpm = Math.max(60, Math.min(240, wpm));
+  return Math.max(1.8, (effectiveWords / safeWpm) * 60);
+}
+
 interface PrompterViewProps {
   script: IScript;
   onClose: () => void;
@@ -37,8 +50,10 @@ export const PrompterView: React.FC<PrompterViewProps> = ({
   const [countdown, setCountdown] = useState<number | null>(3);
   const [currentSentenceIndex, setCurrentSentenceIndex] = useState(0);
   const [wpm, setWpm] = useState(130);
-  const [opacity, setOpacity] = useState<number>(1.0);
+  const [bgOpacity, setBgOpacity] = useState<number>(1.0);
   const [isSubtitleMode, setIsSubtitleMode] = useState<boolean>(false);
+  const [sentenceProgress, setSentenceProgress] = useState<number>(0);
+  const subtitleElapsedRef = useRef<number>(0);
 
   // 음성 상태
   const [speechStatus, setSpeechStatus] = useState<'idle' | 'listening' | 'error'>('idle');
@@ -46,14 +61,17 @@ export const PrompterView: React.FC<PrompterViewProps> = ({
   const [lastSpokenText, setLastSpokenText] = useState('');
   const [speechErrorMessage, setSpeechErrorMessage] = useState<string | null>(null);
 
-  const handleOpacityChange = useCallback((newOpacity: number) => {
-    setOpacity(newOpacity);
-    window.electronAPI?.setOpacity(newOpacity);
+  const handleBgOpacityChange = useCallback((newOpacity: number) => {
+    setBgOpacity(newOpacity);
+    // OS 창 자체는 1.0 유지 (글자 앤티에일리어싱 흐려짐 방지), 배경만 투명해짐
+    window.electronAPI?.setOpacity(1.0);
   }, []);
 
   const handleToggleSubtitleMode = useCallback(async () => {
     const next = !isSubtitleMode;
     setIsSubtitleMode(next);
+    subtitleElapsedRef.current = 0;
+    setSentenceProgress(0);
     await window.electronAPI?.setCompactMode(next);
   }, [isSubtitleMode]);
 
@@ -132,6 +150,8 @@ export const PrompterView: React.FC<PrompterViewProps> = ({
   const jumpToSentence = useCallback((index: number) => {
     setCurrentSentenceIndex(index);
     currentSentenceIndexRef.current = index;
+    subtitleElapsedRef.current = 0;
+    setSentenceProgress(0);
     scrollToSentence(index, false);
     if (scrollMode === 'voice') {
       speechServiceRef.current?.setAnchorSentenceIndex(index);
@@ -206,7 +226,7 @@ export const PrompterView: React.FC<PrompterViewProps> = ({
     onClose();
   }, [isSubtitleMode, stopSpeechEngine, onClose]);
 
-  // 일정 속도 자동 스크롤 rAF 루프
+  // 일정 속도 자동 스크롤 / 자막 모드 자동 진행 rAF 루프
   useEffect(() => {
     if (scrollMode === 'constant' && isPlaying && countdown === null) {
       let lastTime = performance.now();
@@ -225,7 +245,30 @@ export const PrompterView: React.FC<PrompterViewProps> = ({
         // 탭 전환 등 지연 시 급격한 점프 방지 (최대 100ms 캡)
         const safeDelta = Math.min(delta, 0.1);
 
-        if (containerRef.current) {
+        if (isSubtitleMode) {
+          // 자막 모드: WPM 및 문장 길이에 기반한 자동 진행 엔진
+          const currentItem = structuredData.allSentenceItems[currentSentenceIndexRef.current];
+          const sentenceText = currentItem ? currentItem.sentence : '';
+          const targetDuration = calculateSentenceDurationSec(sentenceText, wpm);
+
+          subtitleElapsedRef.current += safeDelta;
+          const ratio = Math.min(1.0, subtitleElapsedRef.current / targetDuration);
+          setSentenceProgress(ratio * 100);
+
+          if (subtitleElapsedRef.current >= targetDuration) {
+            subtitleElapsedRef.current = 0;
+            setSentenceProgress(0);
+            const nextIndex = currentSentenceIndexRef.current + 1;
+            if (nextIndex < structuredData.allSentenceItems.length) {
+              currentSentenceIndexRef.current = nextIndex;
+              setCurrentSentenceIndex(nextIndex);
+            } else {
+              // 대본 끝 도달 시 자동 정지
+              setIsPlaying(false);
+              return;
+            }
+          }
+        } else if (containerRef.current) {
           const container = containerRef.current;
 
           // 사용자의 마우스 휠 또는 스크롤바 조작 감지 시 위치 재동기화
@@ -280,7 +323,7 @@ export const PrompterView: React.FC<PrompterViewProps> = ({
         }
       };
     }
-  }, [scrollMode, isPlaying, countdown, wpm]);
+  }, [scrollMode, isPlaying, countdown, wpm, isSubtitleMode, structuredData.allSentenceItems]);
 
   // 카운트다운 타이머
   useEffect(() => {
@@ -318,6 +361,8 @@ export const PrompterView: React.FC<PrompterViewProps> = ({
   const handleResetTop = useCallback(() => {
     setCurrentSentenceIndex(0);
     currentSentenceIndexRef.current = 0;
+    subtitleElapsedRef.current = 0;
+    setSentenceProgress(0);
     scrollPosRef.current = 0;
     if (containerRef.current) {
       containerRef.current.scrollTo({ top: 0, behavior: 'smooth' });
@@ -331,10 +376,16 @@ export const PrompterView: React.FC<PrompterViewProps> = ({
   const togglePlay = useCallback(() => {
     setIsPlaying((prev) => {
       const next = !prev;
-      if (next && containerRef.current) {
-        const maxScroll = Math.max(0, containerRef.current.scrollHeight - containerRef.current.clientHeight);
-        if (maxScroll > 0 && containerRef.current.scrollTop >= maxScroll - 5) {
-          handleResetTop();
+      if (next) {
+        if (isSubtitleMode) {
+          if (currentSentenceIndexRef.current >= structuredData.allSentenceItems.length - 1) {
+            handleResetTop();
+          }
+        } else if (containerRef.current) {
+          const maxScroll = Math.max(0, containerRef.current.scrollHeight - containerRef.current.clientHeight);
+          if (maxScroll > 0 && containerRef.current.scrollTop >= maxScroll - 5) {
+            handleResetTop();
+          }
         }
       }
       if (!next) {
@@ -342,7 +393,7 @@ export const PrompterView: React.FC<PrompterViewProps> = ({
       }
       return next;
     });
-  }, [handleResetTop, stopSpeechEngine]);
+  }, [handleResetTop, isSubtitleMode, structuredData.allSentenceItems.length, stopSpeechEngine]);
 
   // 문단 이동
   const handlePrevParagraph = useCallback(() => {
@@ -406,9 +457,9 @@ export const PrompterView: React.FC<PrompterViewProps> = ({
       right: 0,
       bottom: 0,
       backgroundColor: isSubtitleMode
-        ? (opacity < 1.0 ? 'rgba(15, 23, 42, 0.88)' : 'rgba(15, 23, 42, 0.96)')
-        : (opacity < 1.0 ? 'rgba(255, 255, 255, 0.88)' : 'var(--tds-bg-primary)'),
-      backdropFilter: opacity < 1.0 ? 'blur(16px)' : 'none',
+        ? `rgba(15, 23, 42, ${bgOpacity})`
+        : (bgOpacity < 1.0 ? `rgba(15, 23, 42, ${bgOpacity})` : 'var(--tds-bg-primary)'),
+      backdropFilter: bgOpacity < 1.0 && bgOpacity > 0 ? 'blur(16px)' : 'none',
       display: 'flex',
       flexDirection: 'column',
       zIndex: 1000,
@@ -418,21 +469,24 @@ export const PrompterView: React.FC<PrompterViewProps> = ({
       <header style={{
         height: isSubtitleMode ? '44px' : '52px',
         padding: isSubtitleMode ? '0 16px' : '0 20px',
-        borderBottom: isSubtitleMode ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid var(--tds-line-default)',
+        borderBottom: isSubtitleMode || bgOpacity < 1.0 ? '1px solid rgba(255, 255, 255, 0.12)' : '1px solid var(--tds-line-default)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        backgroundColor: isSubtitleMode ? 'rgba(15, 23, 42, 0.95)' : (opacity < 1.0 ? 'rgba(255, 255, 255, 0.85)' : 'var(--tds-bg-primary)'),
+        backgroundColor: bgOpacity === 0
+          ? 'rgba(15, 23, 42, 0.40)'
+          : (isSubtitleMode || bgOpacity < 1.0 ? `rgba(15, 23, 42, ${Math.max(0.65, bgOpacity)})` : 'var(--tds-bg-primary)'),
+        backdropFilter: bgOpacity < 1.0 ? 'blur(16px)' : 'none',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <span style={{
             fontWeight: 700,
             fontSize: isSubtitleMode ? '14px' : '16px',
-            color: isSubtitleMode ? '#F8FAFC' : 'inherit',
+            color: isSubtitleMode || bgOpacity < 1.0 ? '#F8FAFC' : 'inherit',
           }}>
             {script.title}
           </span>
-          <span className="tds-caption" style={{ color: isSubtitleMode ? '#94A3B8' : 'var(--tds-grey-500)' }}>
+          <span className="tds-caption" style={{ color: isSubtitleMode || bgOpacity < 1.0 ? '#94A3B8' : 'var(--tds-grey-500)' }}>
             문장 {currentSentenceIndex + 1} / {structuredData.allSentenceItems.length}
           </span>
         </div>
@@ -447,9 +501,9 @@ export const PrompterView: React.FC<PrompterViewProps> = ({
               borderRadius: 'var(--tds-radius-full)',
               border: scrollMode === 'voice'
                 ? '1.5px solid var(--tds-blue-500)'
-                : (isSubtitleMode ? '1px solid rgba(255, 255, 255, 0.15)' : '1px solid var(--tds-line-default)'),
+                : (isSubtitleMode || bgOpacity < 1.0 ? '1px solid rgba(255, 255, 255, 0.15)' : '1px solid var(--tds-line-default)'),
               backgroundColor: scrollMode === 'voice' ? 'var(--tds-blue-50)' : 'transparent',
-              color: scrollMode === 'voice' ? 'var(--tds-blue-600)' : (isSubtitleMode ? '#CBD5E1' : 'var(--tds-fg-secondary)'),
+              color: scrollMode === 'voice' ? 'var(--tds-blue-600)' : (isSubtitleMode || bgOpacity < 1.0 ? '#CBD5E1' : 'var(--tds-fg-secondary)'),
               fontSize: '12px',
               fontWeight: 600,
               cursor: 'pointer',
@@ -470,9 +524,9 @@ export const PrompterView: React.FC<PrompterViewProps> = ({
               borderRadius: 'var(--tds-radius-full)',
               border: scrollMode === 'constant'
                 ? '1.5px solid var(--tds-blue-500)'
-                : (isSubtitleMode ? '1px solid rgba(255, 255, 255, 0.15)' : '1px solid var(--tds-line-default)'),
+                : (isSubtitleMode || bgOpacity < 1.0 ? '1px solid rgba(255, 255, 255, 0.15)' : '1px solid var(--tds-line-default)'),
               backgroundColor: scrollMode === 'constant' ? 'var(--tds-blue-50)' : 'transparent',
-              color: scrollMode === 'constant' ? 'var(--tds-blue-600)' : (isSubtitleMode ? '#CBD5E1' : 'var(--tds-fg-secondary)'),
+              color: scrollMode === 'constant' ? 'var(--tds-blue-600)' : (isSubtitleMode || bgOpacity < 1.0 ? '#CBD5E1' : 'var(--tds-fg-secondary)'),
               fontSize: '12px',
               fontWeight: 600,
               cursor: 'pointer',
@@ -486,26 +540,31 @@ export const PrompterView: React.FC<PrompterViewProps> = ({
           </button>
         </div>
 
-        {/* 우측 제어 도구 (투명도, 자막 모드, 항상 위, 닫기) */}
+        {/* 우측 제어 도구 (배경 투명도, 자막 모드, 항상 위, 닫기) */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          {/* 투명도 조절 프리셋 */}
+          {/* 배경 투명도 조절 프리셋 (스크립트는 100% 선명도 유지) */}
           <div style={{
             display: 'flex',
             alignItems: 'center',
-            backgroundColor: isSubtitleMode ? 'rgba(255, 255, 255, 0.1)' : 'var(--tds-bg-secondary)',
+            backgroundColor: isSubtitleMode || bgOpacity < 1.0 ? 'rgba(255, 255, 255, 0.12)' : 'var(--tds-bg-secondary)',
             borderRadius: 'var(--tds-radius-m)',
             padding: '2px 4px',
             gap: '2px',
           }}>
-            <Sliders size={12} style={{ color: isSubtitleMode ? '#94A3B8' : 'var(--tds-grey-500)', marginLeft: '4px', marginRight: '2px' }} />
-            {[1.0, 0.75, 0.5, 0.35].map((op) => (
+            <Sliders size={12} style={{ color: isSubtitleMode || bgOpacity < 1.0 ? '#94A3B8' : 'var(--tds-grey-500)', marginLeft: '4px', marginRight: '2px' }} />
+            {[
+              { val: 1.0, label: '100%' },
+              { val: 0.7, label: '70%' },
+              { val: 0.35, label: '35%' },
+              { val: 0.0, label: '투명' },
+            ].map(({ val, label }) => (
               <button
-                key={op}
-                onClick={() => handleOpacityChange(op)}
+                key={val}
+                onClick={() => handleBgOpacityChange(val)}
                 style={{
                   border: 'none',
-                  background: opacity === op ? 'var(--tds-blue-500)' : 'transparent',
-                  color: opacity === op ? '#FFFFFF' : (isSubtitleMode ? '#CBD5E1' : 'var(--tds-grey-600)'),
+                  background: bgOpacity === val ? 'var(--tds-blue-500)' : 'transparent',
+                  color: bgOpacity === val ? '#FFFFFF' : (isSubtitleMode || bgOpacity < 1.0 ? '#CBD5E1' : 'var(--tds-grey-600)'),
                   fontSize: '11px',
                   fontWeight: 600,
                   padding: '2px 6px',
@@ -513,9 +572,9 @@ export const PrompterView: React.FC<PrompterViewProps> = ({
                   cursor: 'pointer',
                   transition: 'all 120ms ease',
                 }}
-                title={`창 투명도 ${Math.round(op * 100)}%`}
+                title={`배경 투명도 ${label} (스크립트는 100% 선명도 유지)`}
               >
-                {Math.round(op * 100)}%
+                {label}
               </button>
             ))}
           </div>
@@ -682,20 +741,39 @@ export const PrompterView: React.FC<PrompterViewProps> = ({
           flexDirection: 'column',
           justifyContent: 'center',
           alignItems: 'center',
-          padding: '12px 28px',
-          background: opacity < 1.0 ? 'rgba(15, 23, 42, 0.88)' : 'rgba(15, 23, 42, 0.97)',
-          color: '#FFFFFF',
+          padding: '8px 24px',
+          background: 'transparent',
           position: 'relative',
         }}>
-          {/* 현재 발화 문장 (대형 볼드 + 스카이블루 하이라이트) */}
+          {/* 일정 속도 모드일 때 실시간 문장 진행률 바 */}
+          {scrollMode === 'constant' && (
+            <div style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              height: '3px',
+              backgroundColor: 'rgba(255, 255, 255, 0.12)',
+            }}>
+              <div style={{
+                height: '100%',
+                width: `${sentenceProgress}%`,
+                backgroundColor: 'var(--tds-blue-500)',
+                transition: 'width 80ms linear',
+              }} />
+            </div>
+          )}
+
+          {/* 현재 발화 문장 (100% 불투명 솔리드 + 스카이블루 + 짙은 그림자) */}
           <div style={{
             fontSize: '22px',
             fontWeight: 700,
             lineHeight: 1.45,
             textAlign: 'center',
             color: '#38BDF8',
-            textShadow: '0 2px 10px rgba(0, 0, 0, 0.7)',
-            marginBottom: '6px',
+            opacity: 1,
+            textShadow: '0 2px 4px rgba(0, 0, 0, 0.95), 0 0 10px rgba(0, 0, 0, 0.9), 0 1px 2px #000000',
+            marginBottom: '4px',
             maxWidth: '800px',
             wordBreak: 'keep-all',
           }}>
@@ -710,11 +788,13 @@ export const PrompterView: React.FC<PrompterViewProps> = ({
               }
             }}
             style={{
-              fontSize: '15px',
+              fontSize: '14px',
               fontWeight: 500,
               lineHeight: 1.4,
               textAlign: 'center',
-              color: 'rgba(255, 255, 255, 0.65)',
+              color: 'rgba(255, 255, 255, 0.80)',
+              opacity: 1,
+              textShadow: '0 1px 3px rgba(0, 0, 0, 0.95), 0 0 6px rgba(0, 0, 0, 0.85)',
               maxWidth: '760px',
               wordBreak: 'keep-all',
               cursor: currentSentenceIndex + 1 < structuredData.allSentenceItems.length ? 'pointer' : 'default',
@@ -791,12 +871,18 @@ export const PrompterView: React.FC<PrompterViewProps> = ({
                         display: 'inline',
                         padding: '2px 4px',
                         borderRadius: 'var(--tds-radius-s)',
-                        backgroundColor: isCurrent ? 'var(--tds-blue-50, #E8F3FF)' : 'transparent',
+                        backgroundColor: isCurrent
+                          ? (bgOpacity < 1.0 ? 'rgba(56, 189, 248, 0.25)' : 'var(--tds-blue-50, #E8F3FF)')
+                          : 'transparent',
                         color: isCurrent
-                          ? 'var(--tds-blue-600, #1B64DA)'
+                          ? (bgOpacity < 1.0 ? '#38BDF8' : 'var(--tds-blue-600, #1B64DA)')
                           : isPast
-                          ? 'var(--tds-grey-400, #B0B8C1)'
-                          : 'var(--tds-grey-900, #191F28)',
+                          ? (bgOpacity < 1.0 ? 'rgba(255, 255, 255, 0.55)' : 'var(--tds-grey-400, #B0B8C1)')
+                          : (bgOpacity < 1.0 ? '#FFFFFF' : 'var(--tds-grey-900, #191F28)'),
+                        textShadow: bgOpacity < 1.0
+                          ? '0 1px 3px rgba(0, 0, 0, 0.95), 0 0 8px rgba(0, 0, 0, 0.85)'
+                          : 'none',
+                        opacity: 1,
                         fontWeight: isCurrent ? 700 : 500,
                         cursor: 'pointer',
                         transition: 'all 120ms ease',
@@ -817,15 +903,16 @@ export const PrompterView: React.FC<PrompterViewProps> = ({
       <div style={{
         height: isSubtitleMode ? '48px' : '72px',
         padding: isSubtitleMode ? '0 20px' : '0 32px',
-        backgroundColor: isSubtitleMode
-          ? 'rgba(15, 23, 42, 0.98)'
-          : (opacity < 1.0 ? 'rgba(255, 255, 255, 0.90)' : 'var(--tds-bg-primary)'),
-        borderTop: isSubtitleMode ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid var(--tds-line-default)',
+        backgroundColor: bgOpacity === 0
+          ? 'rgba(15, 23, 42, 0.40)'
+          : (isSubtitleMode || bgOpacity < 1.0 ? `rgba(15, 23, 42, ${Math.max(0.65, bgOpacity)})` : 'var(--tds-bg-primary)'),
+        borderTop: isSubtitleMode || bgOpacity < 1.0 ? '1px solid rgba(255, 255, 255, 0.12)' : '1px solid var(--tds-line-default)',
         boxShadow: 'var(--tds-shadow-2)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
         zIndex: 20,
+        backdropFilter: bgOpacity < 1.0 ? 'blur(16px)' : 'none',
       }}>
         {/* 좌측 이동 제어 */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>

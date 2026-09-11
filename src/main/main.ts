@@ -187,9 +187,9 @@ function createWindow(): void {
     x: isSmokeTestMode ? 100 : winState.x,
     y: isSmokeTestMode ? 100 : winState.y,
     minWidth: 420,
-    minHeight: 380,
+    minHeight: 140,
     alwaysOnTop: isSmokeTestMode ? false : winState.isAlwaysOnTop,
-    opacity: winState.opacity ?? 1.0,
+    opacity: 1.0,
     webPreferences: {
       preload: path.join(__dirname, '../preload/preload.cjs'),
       contextIsolation: true,
@@ -198,7 +198,8 @@ function createWindow(): void {
     },
     title: 'RehearsePrompt',
     icon: path.join(__dirname, '../../build/icon.ico'),
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#00000000',
+    transparent: true,
     show: !isSmokeTestMode, // smoke test 모드에서는 화면 표시 생략
   });
 
@@ -394,14 +395,14 @@ function setupIpcHandlers(): void {
     return false;
   });
 
-  ipcMain.handle('window:set-opacity', (_event, opacity: number) => {
+  ipcMain.handle('window:set-opacity', (_event, _opacity: number) => {
     if (mainWindow && !mainWindow.isDestroyed()) {
-      const clamped = Math.max(0.2, Math.min(1.0, opacity));
-      mainWindow.setOpacity(clamped);
+      // OS 레벨의 전체 창 투명화는 글자까지 흐려지므로 창 자체는 1.0 유지 (배경 투명화는 렌더러 CSS에서 전담)
+      mainWindow.setOpacity(1.0);
       storageService.saveSettings({
         windowState: {
           ...storageService.getSettings().windowState,
-          opacity: clamped,
+          opacity: 1.0,
         },
       });
       return true;

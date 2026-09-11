@@ -193,115 +193,122 @@ export const App: React.FC = () => {
 
   return (
     <ErrorBoundary>
-      <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', backgroundColor: 'var(--tds-bg-secondary)' }}>
-        {/* 상단 TopBar */}
-        <header style={{
-          height: '56px',
-          backgroundColor: 'var(--tds-bg-primary)',
-          borderBottom: '1px solid var(--tds-line-default)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '0 20px',
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <span style={{ fontSize: '18px', fontWeight: 700, color: 'var(--tds-blue-500)' }}>
-              RehearsePrompt
-            </span>
-            {appInfo && (
-              <span className="tds-caption" style={{
-                backgroundColor: 'var(--tds-grey-100)',
-                color: 'var(--tds-grey-600)',
-                padding: '2px 8px',
-                borderRadius: 'var(--tds-radius-s)',
-              }}>
-                v{appInfo.version}
-              </span>
-            )}
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <TButton
-              variant={isAlwaysOnTop ? 'primary' : 'secondary'}
-              size="s"
-              onClick={handleToggleAlwaysOnTop}
-              icon={<Pin size={14} />}
-            >
-              {isAlwaysOnTop ? '항상 위 켜짐' : '항상 위'}
-            </TButton>
-
-            <TButton
-              variant={activeTab === 'editor' ? 'primary' : 'ghost'}
-              size="s"
-              onClick={() => setActiveTab('editor')}
-            >
-              대본 편집
-            </TButton>
-
-            <TButton
-              variant={activeTab === 'prompter' ? 'primary' : 'ghost'}
-              size="s"
-              onClick={() => setActiveTab('prompter')}
-              icon={<Play size={14} />}
-            >
-              텔레프롬프터
-            </TButton>
-
-            <TButton
-              variant={activeTab === 'settings' ? 'primary' : 'ghost'}
-              size="s"
-              onClick={() => setActiveTab('settings')}
-              icon={<SettingsIcon size={14} />}
-            >
-              설정
-            </TButton>
-          </div>
-        </header>
-
-        {/* 메인 뷰포트 레이아웃 */}
-        <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
-          {/* 사이드바 */}
-          <ScriptSidebar
-            scripts={scripts}
-            selectedScriptId={selectedScriptId}
-            onSelectScript={(s) => setSelectedScriptId(s.id)}
-            onCreateNew={handleCreateNewScript}
-            onImport={handleImportScript}
-            onToggleFavorite={handleToggleFavorite}
-            onRestoreScript={handleRestoreScript}
-            onPermanentDelete={handleRequestPermanentDelete}
-            searchQuery={searchQuery}
-            onSearchChange={setSearchQuery}
-            activeFilter={activeFilter}
-            onFilterChange={setActiveFilter}
-            sortBy={sortBy}
-            onSortChange={setSortBy}
-          />
-
-          {/* 중앙 에디터 뷰 */}
-          <main style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
-            <EditorView
-              script={selectedScript}
-              onUpdateScript={handleUpdateScript}
-              onDuplicateScript={handleDuplicateScript}
-              onDeleteScript={handleRequestDelete}
-              onExportScript={handleExportScript}
-              onStartPrompter={(_s) => {
-                setActiveTab('prompter');
-                showToast('텔레프롬프터 모드를 준비하고 있어요.');
-              }}
-            />
-          </main>
-        </div>
-
-        {/* 텔레프롬프터 모드 화면 */}
-        {activeTab === 'prompter' && selectedScript && (
+      <div style={{
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100vh',
+        backgroundColor: activeTab === 'prompter' ? 'transparent' : 'var(--tds-bg-secondary)',
+      }}>
+        {activeTab === 'prompter' && selectedScript ? (
+          /* 텔레프롬프터 전용 뷰 (투명 배경 투과 지원) */
           <PrompterView
             script={selectedScript}
             onClose={() => setActiveTab('editor')}
             isAlwaysOnTop={isAlwaysOnTop}
             onToggleAlwaysOnTop={handleToggleAlwaysOnTop}
           />
+        ) : (
+          <>
+            {/* 상단 TopBar */}
+            <header style={{
+              height: '56px',
+              backgroundColor: 'var(--tds-bg-primary)',
+              borderBottom: '1px solid var(--tds-line-default)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '0 20px',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <span style={{ fontSize: '18px', fontWeight: 700, color: 'var(--tds-blue-500)' }}>
+                  RehearsePrompt
+                </span>
+                {appInfo && (
+                  <span className="tds-caption" style={{
+                    backgroundColor: 'var(--tds-grey-100)',
+                    color: 'var(--tds-grey-600)',
+                    padding: '2px 8px',
+                    borderRadius: 'var(--tds-radius-s)',
+                  }}>
+                    v{appInfo.version}
+                  </span>
+                )}
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <TButton
+                  variant={isAlwaysOnTop ? 'primary' : 'secondary'}
+                  size="s"
+                  onClick={handleToggleAlwaysOnTop}
+                  icon={<Pin size={14} />}
+                >
+                  {isAlwaysOnTop ? '항상 위 켜짐' : '항상 위'}
+                </TButton>
+
+                <TButton
+                  variant={activeTab === 'editor' ? 'primary' : 'ghost'}
+                  size="s"
+                  onClick={() => setActiveTab('editor')}
+                >
+                  대본 편집
+                </TButton>
+
+                <TButton
+                  variant={activeTab === 'prompter' ? 'primary' : 'ghost'}
+                  size="s"
+                  onClick={() => setActiveTab('prompter')}
+                  icon={<Play size={14} />}
+                >
+                  텔레프롬프터
+                </TButton>
+
+                <TButton
+                  variant={activeTab === 'settings' ? 'primary' : 'ghost'}
+                  size="s"
+                  onClick={() => setActiveTab('settings')}
+                  icon={<SettingsIcon size={14} />}
+                >
+                  설정
+                </TButton>
+              </div>
+            </header>
+
+            {/* 메인 뷰포트 레이아웃 */}
+            <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+              {/* 사이드바 */}
+              <ScriptSidebar
+                scripts={scripts}
+                selectedScriptId={selectedScriptId}
+                onSelectScript={(s) => setSelectedScriptId(s.id)}
+                onCreateNew={handleCreateNewScript}
+                onImport={handleImportScript}
+                onToggleFavorite={handleToggleFavorite}
+                onRestoreScript={handleRestoreScript}
+                onPermanentDelete={handleRequestPermanentDelete}
+                searchQuery={searchQuery}
+                onSearchChange={setSearchQuery}
+                activeFilter={activeFilter}
+                onFilterChange={setActiveFilter}
+                sortBy={sortBy}
+                onSortChange={setSortBy}
+              />
+
+              {/* 중앙 에디터 뷰 */}
+              <main style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
+                <EditorView
+                  script={selectedScript}
+                  onUpdateScript={handleUpdateScript}
+                  onDuplicateScript={handleDuplicateScript}
+                  onDeleteScript={handleRequestDelete}
+                  onExportScript={handleExportScript}
+                  onStartPrompter={(_s) => {
+                    setActiveTab('prompter');
+                    showToast('텔레프롬프터 모드를 준비하고 있어요.');
+                  }}
+                />
+              </main>
+            </div>
+          </>
         )}
 
         {/* 삭제 확인 모달 */}

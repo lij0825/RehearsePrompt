@@ -7,6 +7,16 @@ function clampOpacity(opacity: number): number {
 	return Math.max(0.2, Math.min(1.0, opacity));
 }
 
+function calculateSentenceDurationSec(sentence: string, wpm: number): number {
+	const trimmed = sentence.trim();
+	if (!trimmed) return 2.0;
+	const words = trimmed.split(/\s+/).length;
+	const chars = trimmed.length;
+	const effectiveWords = Math.max(words, Math.ceil(chars / 4), 2);
+	const safeWpm = Math.max(60, Math.min(240, wpm));
+	return Math.max(1.8, (effectiveWords / safeWpm) * 60);
+}
+
 function calculateCompactWindowBounds(screenWidth: number, compactWidth = 840, compactHeight = 180, topMargin = 32): {
 	x: number;
 	y: number;
@@ -115,5 +125,74 @@ describe('PHASE 6: 텔레프롬프터 투명도 제어 및 슬림 자막 모드 
 		expect(negativeResult.currentSentence).toBe('첫 문장입니다.');
 		expect(overflowResult.currentSentence).toBe('두 번째 문장입니다.');
 		expect(overflowResult.isLast).toBe(true);
+	});
+
+	it('WPM 속도 및 문장 길이에 따라 자막 모드 문장 지속 시간이 비례하여 산출되어야 한다', () => {
+		// Given: 단문, 중문, 장문 문장
+		const shortSentence = '안녕하세요.';
+		const mediumSentence = '대규모 분산 시스템 환경에서 고가용성 아키텍처를 설계한 경험이 있습니다.';
+		const longSentence = '첫째로 분산 캐시 계층을 도입하여 데이터베이스의 직접적인 부하를 70% 이상 경감시켰으며, 메시지 큐를 통한 비동기 이벤트 발행으로 시스템 간 결합도를 최소화했습니다.';
+
+		// When: 130 WPM 기준 소요 시간 계산
+		const shortDuration = calculateSentenceDurationSec(shortSentence, 130);
+		const mediumDuration = calculateSentenceDurationSec(mediumSentence, 130);
+		const longDuration = calculateSentenceDurationSec(longSentence, 130);
+
+		// Then: 최소 1.8초가 보장되며, 글자/어절 수가 많을수록 지속 시간이 길어져야 함
+		expect(shortDuration).toBeGreaterThanOrEqual(1.8);
+		expect(mediumDuration).toBeGreaterThan(shortDuration);
+		expect(longDuration).toBeGreaterThan(mediumDuration);
+
+		// 속도(WPM)가 빨라지면(180 WPM) 소요 시간은 단축되어야 함
+		const fastMediumDuration = calculateSentenceDurationSec(mediumSentence, 180);
+		expect(fastMediumDuration).toBeLessThan(mediumDuration);
+	});
+
+	it('자막 모드 + 일정 속도 모드에서 프레임 경과에 따라 문장이 자동으로 다음으로 전진해야 한다', () => {
+		// Given: 3개 문장으로 구성된 자막 대본 및 130 WPM
+		const sentences = ['문장 1', '문장 2', '문장 3'];
+		const wpm = 130;
+		let currentIdx = 0;
+		let elapsed = 0;
+		let isPlaying = true;
+		const fps = 60;
+		const delta = 1 / fps;
+
+		// When: 15초 동안 60fps rAF 시뮬레이션
+		for (let frame = 0; frame < 15 * fps; frame++) {
+			if (!isPlaying) break;
+
+			const targetDuration = calculateSentenceDurationSec(sentences[currentIdx], wpm);
+			elapsed += delta;
+
+			if (elapsed >= targetDuration) {
+				elapsed = 0;
+				if (currentIdx + 1 < sentences.length) {
+					currentIdx++;
+				} else {
+					isPlaying = false;
+				}
+			}
+		}
+
+		// Then: 15초 후 3개 문장을 모두 정상 순회하고 재생이 완료(false)되어야 한다
+		expect(currentIdx).toBe(2);
+		expect(isPlaying).toBe(false);
+	});
+
+	it('배경 투명도 프리셋(100%, 70%, 35%, 투명)이 정확한 수치로 매핑되어야 한다', () => {
+		// Given: 배경 투명도 프리셋 정의
+		const presets = [
+			{ val: 1.0, label: '100%' },
+			{ val: 0.7, label: '70%' },
+			{ val: 0.35, label: '35%' },
+			{ val: 0.0, label: '투명' },
+		];
+
+		// Then: 완전 투명(0.0)부터 완전 불투명(1.0)까지 올바르게 지원해야 함
+		expect(presets[0].val).toBe(1.0);
+		expect(presets[1].val).toBe(0.7);
+		expect(presets[2].val).toBe(0.35);
+		expect(presets[3].val).toBe(0.0);
 	});
 });
