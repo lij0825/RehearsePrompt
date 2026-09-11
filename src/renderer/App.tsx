@@ -214,6 +214,7 @@ export const App: React.FC = () => {
             onClose={() => setActiveTab('editor')}
             isAlwaysOnTop={isAlwaysOnTop}
             onToggleAlwaysOnTop={handleToggleAlwaysOnTop}
+            settings={settings}
           />
         ) : (
           <>

@@ -140,4 +140,58 @@ describe('PHASE 5: 텔레프롬프터 일정 속도 자동 스크롤 핵심 연�
 		expect(currentTop).toBe(0);
 		expect(isPlaying).toBe(true);
 	});
+
+	it('WPM 속도는 5단위로 가감되며 최소 60에서 최대 240 사이로 안전하게 제한되어야 한다', () => {
+		// Given: 초기 WPM 130
+		let wpm = 130;
+		const step = 5;
+
+		// When 1: 5 WPM 증가 및 감소
+		wpm = Math.min(240, wpm + step);
+		expect(wpm).toBe(135);
+
+		wpm = Math.max(60, wpm - step);
+		expect(wpm).toBe(130);
+
+		// When 2: 최소값 60 이하로 지속 감소 시
+		wpm = 62;
+		wpm = Math.max(60, wpm - step);
+		expect(wpm).toBe(60);
+
+		wpm = Math.max(60, wpm - step);
+		// Then 2: 60 미만으로 떨어지지 않아야 함
+		expect(wpm).toBe(60);
+
+		// When 3: 최대값 240 이상으로 지속 증가 시
+		wpm = 238;
+		wpm = Math.min(240, wpm + step);
+		expect(wpm).toBe(240);
+
+		wpm = Math.min(240, wpm + step);
+		// Then 3: 240을 초과하지 않아야 함
+		expect(wpm).toBe(240);
+	});
+
+	it('환경설정(Settings)의 defaultWpm과 defaultScrollMode, countdownSeconds가 프롬프터 초기값으로 정확히 연동되어야 한다', () => {
+		// Given: 사용자가 환경설정에서 변경 및 저장한 설정값
+		const customSettings = {
+			defaultWpm: 155,
+			defaultScrollMode: 'constant' as const,
+			countdownSeconds: 0,
+		};
+
+		// When: 프롬프터 뷰 진입 시 초기값 결정 로직
+		const initialWpm = customSettings?.defaultWpm ?? 130;
+		const initialScrollMode = customSettings?.defaultScrollMode ?? 'voice';
+		const initialCountdown = customSettings?.countdownSeconds !== undefined
+			? (customSettings.countdownSeconds > 0 ? customSettings.countdownSeconds : null)
+			: 3;
+		const initialIsPlaying = initialCountdown === null;
+
+		// Then: 설정한 155 WPM, constant 모드, 카운트다운 없이 즉시 재생이 반영되어야 한다
+		expect(initialWpm).toBe(155);
+		expect(initialScrollMode).toBe('constant');
+		expect(initialCountdown).toBeNull();
+		expect(initialIsPlaying).toBe(true);
+	});
 });

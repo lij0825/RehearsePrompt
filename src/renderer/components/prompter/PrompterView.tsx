@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import type { IScript, ScrollMode } from '../../../types/index.ts';
+import type { IScript, ScrollMode, IAppSettings } from '../../../types/index.ts';
 import { splitParagraphs, splitSentences } from '../../utils/textMetrics.ts';
 import { SpeechService } from '../../services/speech/speechService.ts';
 import type { SentenceItem } from '../../services/speech/sentenceMatcher.ts';
@@ -36,6 +36,7 @@ interface PrompterViewProps {
   onClose: () => void;
   isAlwaysOnTop: boolean;
   onToggleAlwaysOnTop: () => void;
+  settings?: IAppSettings | null;
 }
 
 export const PrompterView: React.FC<PrompterViewProps> = ({
@@ -43,12 +44,32 @@ export const PrompterView: React.FC<PrompterViewProps> = ({
   onClose,
   isAlwaysOnTop,
   onToggleAlwaysOnTop,
+  settings,
 }) => {
-  const [scrollMode, setScrollMode] = useState<ScrollMode>('voice');
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [countdown, setCountdown] = useState<number | null>(3);
+  const initialWpm = settings?.defaultWpm ?? 130;
+  const initialScrollMode = settings?.defaultScrollMode ?? 'voice';
+  const initialCountdown = settings?.countdownSeconds !== undefined
+    ? (settings.countdownSeconds > 0 ? settings.countdownSeconds : null)
+    : 3;
+
+  const [scrollMode, setScrollMode] = useState<ScrollMode>(initialScrollMode);
+  const [isPlaying, setIsPlaying] = useState<boolean>(initialCountdown === null);
+  const [countdown, setCountdown] = useState<number | null>(initialCountdown);
   const [currentSentenceIndex, setCurrentSentenceIndex] = useState(0);
-  const [wpm, setWpm] = useState(130);
+  const [wpm, setWpm] = useState(initialWpm);
+
+  // 외부 settings가 변경되었을 때 WPM 및 모드 동기화
+  useEffect(() => {
+    if (settings?.defaultWpm) {
+      setWpm(settings.defaultWpm);
+    }
+  }, [settings?.defaultWpm]);
+
+  useEffect(() => {
+    if (settings?.defaultScrollMode) {
+      setScrollMode(settings.defaultScrollMode);
+    }
+  }, [settings?.defaultScrollMode]);
   const [isSubtitleMode, setIsSubtitleMode] = useState<boolean>(false);
   const [sentenceProgress, setSentenceProgress] = useState<number>(0);
   const subtitleElapsedRef = useRef<number>(0);
@@ -191,7 +212,7 @@ export const PrompterView: React.FC<PrompterViewProps> = ({
 
     try {
       await service.startListening({
-        language: script.language || 'ko-KR',
+        language: script.language || settings?.speech?.recognitionLanguage || 'ko-KR',
         onSentenceMatched: (match) => {
           setCurrentSentenceIndex(match.sentenceIndex);
         },
@@ -216,7 +237,7 @@ export const PrompterView: React.FC<PrompterViewProps> = ({
       setSpeechErrorMessage(msg);
       setSpeechStatus('error');
     }
-  }, [script.language]);
+  }, [script.language, settings?.speech?.recognitionLanguage]);
 
   const stopSpeechEngine = useCallback(() => {
     speechServiceRef.current?.stopListening();
@@ -448,10 +469,10 @@ export const PrompterView: React.FC<PrompterViewProps> = ({
         jumpToSentence(nextIdx);
       } else if (e.key === ']' || e.key === '}') {
         e.preventDefault();
-        setWpm((prev) => Math.min(240, prev + 10));
+        setWpm((prev) => Math.min(240, prev + 5));
       } else if (e.key === '[' || e.key === '{') {
         e.preventDefault();
-        setWpm((prev) => Math.max(60, prev - 10));
+        setWpm((prev) => Math.max(60, prev - 5));
       }
     };
 
@@ -947,7 +968,7 @@ export const PrompterView: React.FC<PrompterViewProps> = ({
             {scrollMode === 'constant' ? (
               <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                 <button
-                  onClick={() => setWpm((prev) => Math.max(60, prev - 10))}
+                  onClick={() => setWpm((prev) => Math.max(60, prev - 5))}
                   style={{
                     border: 'none',
                     background: 'rgba(255, 255, 255, 0.1)',
@@ -966,7 +987,7 @@ export const PrompterView: React.FC<PrompterViewProps> = ({
                   {wpm} WPM
                 </span>
                 <button
-                  onClick={() => setWpm((prev) => Math.min(240, prev + 10))}
+                  onClick={() => setWpm((prev) => Math.min(240, prev + 5))}
                   style={{
                     border: 'none',
                     background: 'rgba(255, 255, 255, 0.1)',
@@ -1025,7 +1046,7 @@ export const PrompterView: React.FC<PrompterViewProps> = ({
               height: '100%',
               overflowY: 'auto',
               padding: '160px 48px 300px 48px',
-              maxWidth: '860px',
+              maxWidth: settings?.maxWidth ? `${settings.maxWidth}px` : '860px',
               margin: '0 auto',
             }}
           >
@@ -1033,9 +1054,9 @@ export const PrompterView: React.FC<PrompterViewProps> = ({
               <div
                 key={para.paragraphIndex}
                 style={{
-                  marginBottom: '36px',
-                  lineHeight: 1.85,
-                  fontSize: '24px',
+                  marginBottom: settings?.paragraphSpacing ? `${settings.paragraphSpacing}px` : '36px',
+                  lineHeight: settings?.lineHeight ?? 1.85,
+                  fontSize: settings?.fontSize ? `${settings.fontSize}px` : '24px',
                   fontWeight: 500,
                 }}
               >
@@ -1139,7 +1160,7 @@ export const PrompterView: React.FC<PrompterViewProps> = ({
           {scrollMode === 'constant' && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
               <button
-                onClick={() => setWpm((prev) => Math.max(60, prev - 10))}
+                onClick={() => setWpm((prev) => Math.max(60, prev - 5))}
                 style={{
                   width: isSubtitleMode ? '28px' : '32px',
                   height: isSubtitleMode ? '28px' : '32px',
@@ -1163,7 +1184,7 @@ export const PrompterView: React.FC<PrompterViewProps> = ({
                 {wpm} WPM
               </span>
               <button
-                onClick={() => setWpm((prev) => Math.min(240, prev + 10))}
+                onClick={() => setWpm((prev) => Math.min(240, prev + 5))}
                 style={{
                   width: isSubtitleMode ? '28px' : '32px',
                   height: isSubtitleMode ? '28px' : '32px',

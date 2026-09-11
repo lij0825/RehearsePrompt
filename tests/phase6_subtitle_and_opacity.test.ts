@@ -182,7 +182,7 @@ describe('PHASE 6: 텔레프롬프터 투명도 제어 및 슬림 자막 모드 
 
 	it('일정 속도 모드 선택 시 대기 없이 즉시 재생 상태로 활성화되어야 한다', () => {
 		// Given: 정지 상태 및 카운트다운 잔여 상태
-		let scrollMode: 'voice' | 'constant' = 'voice';
+		let scrollMode: string = 'voice';
 		let isPlaying = false;
 		let countdown: number | null = 3;
 

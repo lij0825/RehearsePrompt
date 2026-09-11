@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import type { IAppInfo, IAppSettings, ScrollMode } from '../../../types/index.ts';
 import { TButton } from '../common/TButton.tsx';
 import {
@@ -31,7 +31,17 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 	const [wpm, setWpm] = useState<number>(settings?.defaultWpm ?? 130);
 	const [scrollMode, setScrollMode] = useState<ScrollMode>(settings?.defaultScrollMode ?? 'voice');
 	const [countdown, setCountdown] = useState<number>(settings?.countdownSeconds ?? 3);
-	const [lang, setLang] = useState<string>(settings?.speech.recognitionLanguage ?? 'ko-KR');
+	const [lang, setLang] = useState<string>(settings?.speech?.recognitionLanguage ?? 'ko-KR');
+
+	// 모달이 열리거나 외부 설정이 업데이트되었을 때 상태 동기화
+	useEffect(() => {
+		if (isOpen && settings) {
+			setWpm(settings.defaultWpm ?? 130);
+			setScrollMode(settings.defaultScrollMode ?? 'voice');
+			setCountdown(settings.countdownSeconds ?? 3);
+			setLang(settings.speech?.recognitionLanguage ?? 'ko-KR');
+		}
+	}, [isOpen, settings]);
 
 	if (!isOpen) {
 		return null;
@@ -226,7 +236,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 								</label>
 								<div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
 									<button
-										onClick={() => setWpm((prev) => Math.max(60, prev - 10))}
+										onClick={() => setWpm((prev) => Math.max(60, prev - 5))}
 										style={{
 											width: '36px',
 											height: '36px',
@@ -244,7 +254,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 										{wpm} WPM
 									</span>
 									<button
-										onClick={() => setWpm((prev) => Math.min(240, prev + 10))}
+										onClick={() => setWpm((prev) => Math.min(240, prev + 5))}
 										style={{
 											width: '36px',
 											height: '36px',
