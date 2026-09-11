@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, dialog, globalShortcut } from 'electron';
+import { app, BrowserWindow, ipcMain, dialog, globalShortcut, screen } from 'electron';
 import path from 'node:path';
 import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -10,6 +10,7 @@ const __dirname = path.dirname(__filename);
 
 let mainWindow: BrowserWindow | null = null;
 let storageService: StorageService;
+let savedNormalBounds: { x: number; y: number; width: number; height: number } | null = null;
 
 const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
 const isSmokeTestMode = process.argv.includes('--smoke-test');
@@ -395,7 +396,7 @@ function setupIpcHandlers(): void {
 
   ipcMain.handle('window:set-opacity', (_event, opacity: number) => {
     if (mainWindow && !mainWindow.isDestroyed()) {
-      const clamped = Math.max(0.3, Math.min(1.0, opacity));
+      const clamped = Math.max(0.2, Math.min(1.0, opacity));
       mainWindow.setOpacity(clamped);
       storageService.saveSettings({
         windowState: {
@@ -403,6 +404,38 @@ function setupIpcHandlers(): void {
           opacity: clamped,
         },
       });
+      return true;
+    }
+    return false;
+  });
+
+  ipcMain.handle('window:set-compact-mode', (_event, isCompact: boolean) => {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      if (isCompact) {
+        // 기존 창 크기 및 위치 보존
+        savedNormalBounds = mainWindow.getBounds();
+
+        // 주 모니터 상단 중앙 배치 (웹캠 아래 시선 유도 최적화)
+        const primaryDisplay = screen.getPrimaryDisplay();
+        const { width: screenWidth } = primaryDisplay.workAreaSize;
+        const compactWidth = 840;
+        const compactHeight = 180;
+        const x = Math.round((screenWidth - compactWidth) / 2);
+        const y = 32;
+
+        mainWindow.setMinimumSize(420, 140);
+        mainWindow.setBounds({ x, y, width: compactWidth, height: compactHeight });
+        mainWindow.setAlwaysOnTop(true);
+      } else {
+        // 이전 일반 창 크기 및 위치 복원
+        mainWindow.setMinimumSize(420, 380);
+        if (savedNormalBounds) {
+          mainWindow.setBounds(savedNormalBounds);
+        } else {
+          mainWindow.setSize(1080, 720);
+          mainWindow.center();
+        }
+      }
       return true;
     }
     return false;

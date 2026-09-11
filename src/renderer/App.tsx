@@ -7,7 +7,7 @@ import { ScriptSidebar } from './components/editor/ScriptSidebar.tsx';
 import { EditorView } from './components/editor/EditorView.tsx';
 import { PrompterView } from './components/prompter/PrompterView.tsx';
 import type { IAppInfo, IAppSettings, IScript } from '../types/index.ts';
-import { ShieldAlert, Pin, Play, Settings as SettingsIcon } from 'lucide-react';
+import { Pin, Play, Settings as SettingsIcon } from 'lucide-react';
 
 export const App: React.FC = () => {
   const [appInfo, setAppInfo] = useState<IAppInfo | null>(null);
@@ -194,24 +194,6 @@ export const App: React.FC = () => {
   return (
     <ErrorBoundary>
       <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', backgroundColor: 'var(--tds-bg-secondary)' }}>
-        {/* 상단 보안 및 화면 공유 투명성 고지 배너 */}
-        <div style={{
-          backgroundColor: 'var(--tds-blue-50)',
-          color: 'var(--tds-blue-600)',
-          padding: '8px 16px',
-          fontSize: '12px',
-          fontWeight: 600,
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px',
-          borderBottom: '1px solid var(--tds-grey-200)',
-        }}>
-          <ShieldAlert size={14} />
-          <span>
-            안내: RehearsePrompt는 윤리적 발표 연습용 텔레프롬프터입니다. 화면 공유 시 본 창이 상대방에게 그대로 노출됩니다.
-          </span>
-        </div>
-
         {/* 상단 TopBar */}
         <header style={{
           height: '56px',

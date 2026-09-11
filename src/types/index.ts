@@ -124,6 +124,7 @@ export interface ElectronAPI {
   getSessionHistory: (scriptId?: string) => Promise<IPracticeSession[]>;
   setAlwaysOnTop: (alwaysOnTop: boolean) => Promise<boolean>;
   setOpacity: (opacity: number) => Promise<boolean>;
+  setCompactMode: (isCompact: boolean) => Promise<boolean>;
   exportBackup: () => Promise<string | null>;
   importBackup: () => Promise<{ success: boolean; count?: number; message?: string }>;
   onShortcutTriggered: (callback: (action: string) => void) => () => void;

@@ -18,6 +18,7 @@ const api: ElectronAPI = {
   getSessionHistory: (scriptId?: string) => ipcRenderer.invoke('session:get-history', scriptId),
   setAlwaysOnTop: (alwaysOnTop: boolean) => ipcRenderer.invoke('window:set-always-on-top', alwaysOnTop),
   setOpacity: (opacity: number) => ipcRenderer.invoke('window:set-opacity', opacity),
+  setCompactMode: (isCompact: boolean) => ipcRenderer.invoke('window:set-compact-mode', isCompact),
   exportBackup: () => ipcRenderer.invoke('dialog:export-backup'),
   importBackup: () => ipcRenderer.invoke('dialog:import-backup'),
   onShortcutTriggered: (callback: (action: string) => void) => {
