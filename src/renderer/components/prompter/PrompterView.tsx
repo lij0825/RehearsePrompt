@@ -15,8 +15,7 @@ import {
   X,
   Pin,
   HardDrive,
-  Subtitles,
-  Sliders,
+  Maximize2,
 } from 'lucide-react';
 
 /**
@@ -50,7 +49,6 @@ export const PrompterView: React.FC<PrompterViewProps> = ({
   const [countdown, setCountdown] = useState<number | null>(3);
   const [currentSentenceIndex, setCurrentSentenceIndex] = useState(0);
   const [wpm, setWpm] = useState(130);
-  const [bgOpacity, setBgOpacity] = useState<number>(1.0);
   const [isSubtitleMode, setIsSubtitleMode] = useState<boolean>(false);
   const [sentenceProgress, setSentenceProgress] = useState<number>(0);
   const subtitleElapsedRef = useRef<number>(0);
@@ -61,12 +59,6 @@ export const PrompterView: React.FC<PrompterViewProps> = ({
   const [lastSpokenText, setLastSpokenText] = useState('');
   const [speechErrorMessage, setSpeechErrorMessage] = useState<string | null>(null);
 
-  const handleBgOpacityChange = useCallback((newOpacity: number) => {
-    setBgOpacity(newOpacity);
-    // OS 창 자체는 1.0 유지 (글자 앤티에일리어싱 흐려짐 방지), 배경만 투명해짐
-    window.electronAPI?.setOpacity(1.0);
-  }, []);
-
   const handleToggleSubtitleMode = useCallback(async () => {
     const next = !isSubtitleMode;
     setIsSubtitleMode(next);
@@ -74,6 +66,24 @@ export const PrompterView: React.FC<PrompterViewProps> = ({
     setSentenceProgress(0);
     await window.electronAPI?.setCompactMode(next);
   }, [isSubtitleMode]);
+
+  // 일정 속도 모드 선택 및 즉시 재생 시작
+  const handleSelectConstantMode = useCallback(() => {
+    if (scrollMode === 'constant') {
+      setIsPlaying((prev) => !prev);
+    } else {
+      setScrollMode('constant');
+      setCountdown(null);
+      setIsPlaying(true);
+    }
+  }, [scrollMode]);
+
+  // 음성 스크롤 모드 선택
+  const handleSelectVoiceMode = useCallback(() => {
+    setScrollMode('voice');
+    setCountdown(null);
+    setIsPlaying(true);
+  }, []);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const sentenceRefs = useRef<(HTMLSpanElement | null)[]>([]);
@@ -456,170 +466,126 @@ export const PrompterView: React.FC<PrompterViewProps> = ({
       left: 0,
       right: 0,
       bottom: 0,
-      backgroundColor: isSubtitleMode
-        ? `rgba(15, 23, 42, ${bgOpacity})`
-        : (bgOpacity < 1.0 ? `rgba(15, 23, 42, ${bgOpacity})` : 'var(--tds-bg-primary)'),
-      backdropFilter: bgOpacity < 1.0 && bgOpacity > 0 ? 'blur(16px)' : 'none',
+      backgroundColor: isSubtitleMode ? '#0F172A' : 'var(--tds-bg-primary)',
       display: 'flex',
       flexDirection: 'column',
       zIndex: 1000,
       overflow: 'hidden',
     }}>
-      {/* 1. 상단 헤더 제어 바 */}
-      <header style={{
-        height: isSubtitleMode ? '44px' : '52px',
-        padding: isSubtitleMode ? '0 16px' : '0 20px',
-        borderBottom: isSubtitleMode || bgOpacity < 1.0 ? '1px solid rgba(255, 255, 255, 0.12)' : '1px solid var(--tds-line-default)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        backgroundColor: bgOpacity === 0
-          ? 'rgba(15, 23, 42, 0.40)'
-          : (isSubtitleMode || bgOpacity < 1.0 ? `rgba(15, 23, 42, ${Math.max(0.65, bgOpacity)})` : 'var(--tds-bg-primary)'),
-        backdropFilter: bgOpacity < 1.0 ? 'blur(16px)' : 'none',
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <span style={{
-            fontWeight: 700,
-            fontSize: isSubtitleMode ? '14px' : '16px',
-            color: isSubtitleMode || bgOpacity < 1.0 ? '#F8FAFC' : 'inherit',
-          }}>
-            {script.title}
-          </span>
-          <span className="tds-caption" style={{ color: isSubtitleMode || bgOpacity < 1.0 ? '#94A3B8' : 'var(--tds-grey-500)' }}>
-            문장 {currentSentenceIndex + 1} / {structuredData.allSentenceItems.length}
-          </span>
-        </div>
-
-        {/* 모드 전환 셀렉터 */}
-        <div style={{ display: 'flex', gap: '6px' }}>
-          <button
-            onClick={() => setScrollMode('voice')}
-            style={{
-              height: isSubtitleMode ? '28px' : '32px',
-              padding: '0 10px',
-              borderRadius: 'var(--tds-radius-full)',
-              border: scrollMode === 'voice'
-                ? '1.5px solid var(--tds-blue-500)'
-                : (isSubtitleMode || bgOpacity < 1.0 ? '1px solid rgba(255, 255, 255, 0.15)' : '1px solid var(--tds-line-default)'),
-              backgroundColor: scrollMode === 'voice' ? 'var(--tds-blue-50)' : 'transparent',
-              color: scrollMode === 'voice' ? 'var(--tds-blue-600)' : (isSubtitleMode || bgOpacity < 1.0 ? '#CBD5E1' : 'var(--tds-fg-secondary)'),
-              fontSize: '12px',
-              fontWeight: 600,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-            }}
-          >
-            <Mic size={13} />
-            음성 스크롤
-          </button>
-
-          <button
-            onClick={() => setScrollMode('constant')}
-            style={{
-              height: isSubtitleMode ? '28px' : '32px',
-              padding: '0 10px',
-              borderRadius: 'var(--tds-radius-full)',
-              border: scrollMode === 'constant'
-                ? '1.5px solid var(--tds-blue-500)'
-                : (isSubtitleMode || bgOpacity < 1.0 ? '1px solid rgba(255, 255, 255, 0.15)' : '1px solid var(--tds-line-default)'),
-              backgroundColor: scrollMode === 'constant' ? 'var(--tds-blue-50)' : 'transparent',
-              color: scrollMode === 'constant' ? 'var(--tds-blue-600)' : (isSubtitleMode || bgOpacity < 1.0 ? '#CBD5E1' : 'var(--tds-fg-secondary)'),
-              fontSize: '12px',
-              fontWeight: 600,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-            }}
-          >
-            <Play size={13} />
-            일정 속도 ({wpm} WPM)
-          </button>
-        </div>
-
-        {/* 우측 제어 도구 (배경 투명도, 자막 모드, 항상 위, 닫기) */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          {/* 배경 투명도 조절 프리셋 (스크립트는 100% 선명도 유지) */}
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            backgroundColor: isSubtitleMode || bgOpacity < 1.0 ? 'rgba(255, 255, 255, 0.12)' : 'var(--tds-bg-secondary)',
-            borderRadius: 'var(--tds-radius-m)',
-            padding: '2px 4px',
-            gap: '2px',
-          }}>
-            <Sliders size={12} style={{ color: isSubtitleMode || bgOpacity < 1.0 ? '#94A3B8' : 'var(--tds-grey-500)', marginLeft: '4px', marginRight: '2px' }} />
-            {[
-              { val: 1.0, label: '100%' },
-              { val: 0.7, label: '70%' },
-              { val: 0.35, label: '35%' },
-              { val: 0.0, label: '투명' },
-            ].map(({ val, label }) => (
-              <button
-                key={val}
-                onClick={() => handleBgOpacityChange(val)}
-                style={{
-                  border: 'none',
-                  background: bgOpacity === val ? 'var(--tds-blue-500)' : 'transparent',
-                  color: bgOpacity === val ? '#FFFFFF' : (isSubtitleMode || bgOpacity < 1.0 ? '#CBD5E1' : 'var(--tds-grey-600)'),
-                  fontSize: '11px',
-                  fontWeight: 600,
-                  padding: '2px 6px',
-                  borderRadius: 'var(--tds-radius-s)',
-                  cursor: 'pointer',
-                  transition: 'all 120ms ease',
-                }}
-                title={`배경 투명도 ${label} (스크립트는 100% 선명도 유지)`}
-              >
-                {label}
-              </button>
-            ))}
+      {/* 1. 상단 헤더 제어 바 (일반 전체 프롬프터 모드 전용) */}
+      {!isSubtitleMode && (
+        <header style={{
+          height: '52px',
+          padding: '0 20px',
+          borderBottom: '1px solid var(--tds-line-default)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          backgroundColor: 'var(--tds-bg-primary)',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <span style={{ fontWeight: 700, fontSize: '16px' }}>
+              {script.title}
+            </span>
+            <span className="tds-caption" style={{ color: 'var(--tds-grey-500)' }}>
+              문장 {currentSentenceIndex + 1} / {structuredData.allSentenceItems.length}
+            </span>
           </div>
 
-          {/* 자막 전용 모드 토글 */}
-          <TButton
-            variant={isSubtitleMode ? 'primary' : 'secondary'}
-            size="s"
-            onClick={handleToggleSubtitleMode}
-            icon={<Subtitles size={13} />}
-          >
-            {isSubtitleMode ? '전체 대본' : '자막 모드 (T)'}
-          </TButton>
+          {/* 모드 전환 셀렉터 */}
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button
+              onClick={handleSelectVoiceMode}
+              style={{
+                height: '32px',
+                padding: '0 12px',
+                borderRadius: 'var(--tds-radius-full)',
+                border: scrollMode === 'voice'
+                  ? '1.5px solid var(--tds-blue-500)'
+                  : '1px solid var(--tds-line-default)',
+                backgroundColor: scrollMode === 'voice' ? 'var(--tds-blue-50)' : 'transparent',
+                color: scrollMode === 'voice' ? 'var(--tds-blue-600)' : 'var(--tds-fg-secondary)',
+                fontSize: '12px',
+                fontWeight: 600,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+              }}
+            >
+              <Mic size={14} />
+              음성 스크롤
+            </button>
 
-          {/* 항상 위 토글 */}
-          <TButton
-            variant={isAlwaysOnTop ? 'primary' : 'secondary'}
-            size="s"
-            onClick={onToggleAlwaysOnTop}
-            icon={<Pin size={13} />}
-          >
-            {isAlwaysOnTop ? '항상 위' : '항상 위 끔'}
-          </TButton>
+            <button
+              onClick={handleSelectConstantMode}
+              style={{
+                height: '32px',
+                padding: '0 12px',
+                borderRadius: 'var(--tds-radius-full)',
+                border: scrollMode === 'constant'
+                  ? '1.5px solid var(--tds-blue-500)'
+                  : '1px solid var(--tds-line-default)',
+                backgroundColor: scrollMode === 'constant' ? 'var(--tds-blue-50)' : 'transparent',
+                color: scrollMode === 'constant' ? 'var(--tds-blue-600)' : 'var(--tds-fg-secondary)',
+                fontSize: '12px',
+                fontWeight: 600,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+              }}
+              title="일정 속도로 스크롤 시작/정지"
+            >
+              <Play size={14} />
+              일정 속도 ({wpm} WPM)
+            </button>
+          </div>
 
-          {/* 종료 버튼 */}
-          <button
-            onClick={handleClose}
-            style={{
-              border: 'none',
-              background: 'none',
-              cursor: 'pointer',
-              color: isSubtitleMode ? '#94A3B8' : 'var(--tds-grey-600)',
-              padding: '4px',
-              display: 'flex',
-              alignItems: 'center',
-            }}
-            title="연습 종료 (ESC)"
-          >
-            <X size={16} />
-          </button>
-        </div>
-      </header>
+          {/* 우측 제어 도구 (글자만 최상단 띄우기, 항상 위, 닫기) */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            {/* 글자만 최상단에 띄우기 버튼 */}
+            <TButton
+              variant="secondary"
+              size="s"
+              onClick={handleToggleSubtitleMode}
+              title="웹캠 바로 아래에 글자만 컴팩트하게 띄웁니다 (T)"
+            >
+              📌 글자만 최상단에 띄우기 (T)
+            </TButton>
 
-      {/* 2. 음성 인식 상태 인디케이터 바 */}
-      {scrollMode === 'voice' && (
+            {/* 항상 위 토글 */}
+            <TButton
+              variant={isAlwaysOnTop ? 'primary' : 'secondary'}
+              size="s"
+              onClick={onToggleAlwaysOnTop}
+              icon={<Pin size={13} />}
+            >
+              {isAlwaysOnTop ? '항상 위' : '항상 위 끔'}
+            </TButton>
+
+            {/* 종료 버튼 */}
+            <button
+              onClick={handleClose}
+              style={{
+                border: 'none',
+                background: 'none',
+                cursor: 'pointer',
+                color: 'var(--tds-grey-600)',
+                padding: '4px',
+                display: 'flex',
+                alignItems: 'center',
+              }}
+              title="연습 종료 (ESC)"
+            >
+              <X size={16} />
+            </button>
+          </div>
+        </header>
+      )}
+
+      {/* 2. 음성 인식 상태 인디케이터 바 (일반 모드 전용) */}
+      {!isSubtitleMode && scrollMode === 'voice' && (
         <div style={{
           backgroundColor: isSubtitleMode ? 'rgba(30, 41, 59, 0.9)' : 'var(--tds-bg-secondary)',
           padding: '6px 20px',
@@ -700,8 +666,8 @@ export const PrompterView: React.FC<PrompterViewProps> = ({
         </div>
       )}
 
-      {/* 3. 카운트다운 오버레이 */}
-      {countdown !== null && (
+      {/* 3. 카운트다운 오버레이 (일반 모드 전용) */}
+      {!isSubtitleMode && countdown !== null && (
         <div style={{
           position: 'absolute',
           top: 0,
@@ -732,78 +698,295 @@ export const PrompterView: React.FC<PrompterViewProps> = ({
         </div>
       )}
 
-      {/* 4. 중앙 뷰포트 (자막 모드 vs 일반 전체 스크롤 모드) */}
+      {/* 4. 중앙 뷰포트 (상단 글자 전용 플로팅 모드 vs 일반 전체 스크롤 모드) */}
       {isSubtitleMode ? (
-        /* 4-A. 자막 전용 모드 (Floating Subtitle Bar View) */
+        /* 4-A. 상단 글자 전용 플로팅 뷰 (Floating HUD Bar View) - 단일 일체형 (잘림 방지) */
         <div style={{
           flex: 1,
           display: 'flex',
           flexDirection: 'column',
-          justifyContent: 'center',
-          alignItems: 'center',
-          padding: '8px 24px',
-          background: 'transparent',
-          position: 'relative',
+          backgroundColor: '#0F172A',
+          color: '#FFFFFF',
+          padding: '8px 16px',
+          justifyContent: 'space-between',
+          userSelect: 'none',
+          height: '100%',
+          boxSizing: 'border-box',
         }}>
-          {/* 일정 속도 모드일 때 실시간 문장 진행률 바 */}
-          {scrollMode === 'constant' && (
-            <div style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              height: '3px',
-              backgroundColor: 'rgba(255, 255, 255, 0.12)',
-            }}>
+          {/* 상단 미니 바: 진행률 바 + 타이틀 + 모드 토글 + 복원/닫기 */}
+          <div>
+            {scrollMode === 'constant' && (
               <div style={{
-                height: '100%',
-                width: `${sentenceProgress}%`,
-                backgroundColor: 'var(--tds-blue-500)',
-                transition: 'width 80ms linear',
-              }} />
-            </div>
-          )}
+                width: '100%',
+                height: '3px',
+                backgroundColor: 'rgba(255, 255, 255, 0.15)',
+                borderRadius: '2px',
+                overflow: 'hidden',
+                marginBottom: '6px',
+              }}>
+                <div style={{
+                  height: '100%',
+                  width: `${sentenceProgress}%`,
+                  backgroundColor: '#38BDF8',
+                  transition: 'width 80ms linear',
+                }} />
+              </div>
+            )}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontWeight: 700, fontSize: '13px', color: '#F8FAFC' }}>
+                  {script.title}
+                </span>
+                <span style={{ fontSize: '11px', color: '#94A3B8' }}>
+                  {currentSentenceIndex + 1} / {structuredData.allSentenceItems.length}
+                </span>
+              </div>
 
-          {/* 현재 발화 문장 (100% 불투명 솔리드 + 스카이블루 + 짙은 그림자) */}
-          <div style={{
-            fontSize: '22px',
-            fontWeight: 700,
-            lineHeight: 1.45,
-            textAlign: 'center',
-            color: '#38BDF8',
-            opacity: 1,
-            textShadow: '0 2px 4px rgba(0, 0, 0, 0.95), 0 0 10px rgba(0, 0, 0, 0.9), 0 1px 2px #000000',
-            marginBottom: '4px',
-            maxWidth: '800px',
-            wordBreak: 'keep-all',
-          }}>
-            {structuredData.allSentenceItems[currentSentenceIndex]?.sentence || '대본의 시작입니다.'}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <button
+                  onClick={handleSelectVoiceMode}
+                  style={{
+                    padding: '2px 8px',
+                    borderRadius: 'var(--tds-radius-full)',
+                    border: scrollMode === 'voice' ? '1px solid var(--tds-blue-500)' : '1px solid rgba(255, 255, 255, 0.2)',
+                    backgroundColor: scrollMode === 'voice' ? 'rgba(56, 189, 248, 0.2)' : 'transparent',
+                    color: scrollMode === 'voice' ? '#38BDF8' : '#94A3B8',
+                    fontSize: '11px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                  }}
+                >
+                  🎙️ 음성
+                </button>
+                <button
+                  onClick={handleSelectConstantMode}
+                  style={{
+                    padding: '2px 8px',
+                    borderRadius: 'var(--tds-radius-full)',
+                    border: scrollMode === 'constant' ? '1px solid var(--tds-blue-500)' : '1px solid rgba(255, 255, 255, 0.2)',
+                    backgroundColor: scrollMode === 'constant' ? 'rgba(56, 189, 248, 0.2)' : 'transparent',
+                    color: scrollMode === 'constant' ? '#38BDF8' : '#94A3B8',
+                    fontSize: '11px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                  }}
+                  title="일정 속도로 시작/일시정지"
+                >
+                  ⏱️ 일정속도
+                </button>
+                <button
+                  onClick={handleToggleSubtitleMode}
+                  style={{
+                    padding: '2px 8px',
+                    borderRadius: '6px',
+                    border: '1px solid rgba(255, 255, 255, 0.25)',
+                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                    color: '#F8FAFC',
+                    fontSize: '11px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                  }}
+                  title="전체 화면 텔레프롬프터로 복원 (T)"
+                >
+                  <Maximize2 size={11} /> 전체 화면 복원
+                </button>
+                <button
+                  onClick={handleClose}
+                  style={{
+                    border: 'none',
+                    background: 'none',
+                    color: '#94A3B8',
+                    cursor: 'pointer',
+                    padding: '2px',
+                    display: 'flex',
+                    alignItems: 'center',
+                  }}
+                  title="연습 종료"
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            </div>
           </div>
 
-          {/* 다음 발화 문장 미리보기 */}
-          <div
-            onClick={() => {
-              if (currentSentenceIndex + 1 < structuredData.allSentenceItems.length) {
-                jumpToSentence(currentSentenceIndex + 1);
-              }
-            }}
-            style={{
-              fontSize: '14px',
-              fontWeight: 500,
-              lineHeight: 1.4,
-              textAlign: 'center',
-              color: 'rgba(255, 255, 255, 0.80)',
-              opacity: 1,
-              textShadow: '0 1px 3px rgba(0, 0, 0, 0.95), 0 0 6px rgba(0, 0, 0, 0.85)',
-              maxWidth: '760px',
-              wordBreak: 'keep-all',
-              cursor: currentSentenceIndex + 1 < structuredData.allSentenceItems.length ? 'pointer' : 'default',
-            }}
-            title="클릭하여 다음 문장으로 이동"
-          >
-            {structuredData.allSentenceItems[currentSentenceIndex + 1]?.sentence
-              ? `다음: ${structuredData.allSentenceItems[currentSentenceIndex + 1].sentence}`
-              : '(대본의 마지막 문장입니다)'}
+          {/* 중앙 대본 텍스트 및 이동 */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '8px',
+            margin: '4px 0',
+          }}>
+            <button
+              onClick={() => jumpToSentence(Math.max(0, currentSentenceIndexRef.current - 1))}
+              disabled={currentSentenceIndex <= 0}
+              style={{
+                width: '28px',
+                height: '28px',
+                borderRadius: '6px',
+                border: '1px solid rgba(255, 255, 255, 0.15)',
+                backgroundColor: 'rgba(255, 255, 255, 0.08)',
+                color: '#FFFFFF',
+                cursor: currentSentenceIndex <= 0 ? 'not-allowed' : 'pointer',
+                opacity: currentSentenceIndex <= 0 ? 0.3 : 1,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+              }}
+              title="이전 문장 (↑)"
+            >
+              <ChevronUp size={14} />
+            </button>
+
+            <div style={{ flex: 1, textAlign: 'center', overflow: 'hidden' }}>
+              <div style={{
+                fontSize: '19px',
+                fontWeight: 800,
+                lineHeight: 1.35,
+                color: '#38BDF8',
+                wordBreak: 'keep-all',
+                textShadow: '0 2px 8px rgba(0, 0, 0, 0.5)',
+              }}>
+                {structuredData.allSentenceItems[currentSentenceIndex]?.sentence || '대본의 시작입니다.'}
+              </div>
+              {structuredData.allSentenceItems[currentSentenceIndex + 1]?.sentence && (
+                <div
+                  onClick={() => jumpToSentence(currentSentenceIndex + 1)}
+                  style={{
+                    fontSize: '12px',
+                    fontWeight: 500,
+                    color: 'rgba(255, 255, 255, 0.60)',
+                    marginTop: '2px',
+                    wordBreak: 'keep-all',
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                  }}
+                  title="클릭하여 다음 문장으로 이동"
+                >
+                  다음: {structuredData.allSentenceItems[currentSentenceIndex + 1].sentence}
+                </div>
+              )}
+            </div>
+
+            <button
+              onClick={() => jumpToSentence(Math.min(structuredData.allSentenceItems.length - 1, currentSentenceIndexRef.current + 1))}
+              disabled={currentSentenceIndex >= structuredData.allSentenceItems.length - 1}
+              style={{
+                width: '28px',
+                height: '28px',
+                borderRadius: '6px',
+                border: '1px solid rgba(255, 255, 255, 0.15)',
+                backgroundColor: 'rgba(255, 255, 255, 0.08)',
+                color: '#FFFFFF',
+                cursor: currentSentenceIndex >= structuredData.allSentenceItems.length - 1 ? 'not-allowed' : 'pointer',
+                opacity: currentSentenceIndex >= structuredData.allSentenceItems.length - 1 ? 0.3 : 1,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+              }}
+              title="다음 문장 (↓)"
+            >
+              <ChevronDown size={14} />
+            </button>
+          </div>
+
+          {/* 하단 컨트롤: 처음으로, 재생/일시정지 CTA, WPM 조절 */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            borderTop: '1px solid rgba(255, 255, 255, 0.1)',
+            paddingTop: '4px',
+          }}>
+            <button
+              onClick={handleResetTop}
+              style={{
+                border: 'none',
+                background: 'rgba(255, 255, 255, 0.08)',
+                color: '#94A3B8',
+                borderRadius: '4px',
+                padding: '3px 8px',
+                fontSize: '11px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+              }}
+            >
+              <RotateCcw size={11} /> 처음으로
+            </button>
+
+            {/* 핵심 재생 / 일시정지 버튼 */}
+            <button
+              onClick={togglePlay}
+              style={{
+                backgroundColor: isPlaying ? 'rgba(255, 255, 255, 0.15)' : 'var(--tds-blue-500)',
+                color: '#FFFFFF',
+                border: 'none',
+                borderRadius: '6px',
+                padding: '4px 16px',
+                fontWeight: 700,
+                fontSize: '12px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+              }}
+            >
+              {isPlaying ? <Pause size={12} /> : <Play size={12} />}
+              {isPlaying ? '일시정지 (Space)' : '진행 시작 (Space)'}
+            </button>
+
+            {scrollMode === 'constant' ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <button
+                  onClick={() => setWpm((prev) => Math.max(60, prev - 10))}
+                  style={{
+                    border: 'none',
+                    background: 'rgba(255, 255, 255, 0.1)',
+                    color: '#FFFFFF',
+                    width: '20px',
+                    height: '20px',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontWeight: 700,
+                    fontSize: '12px',
+                  }}
+                >
+                  -
+                </button>
+                <span style={{ fontSize: '11px', fontWeight: 700, minWidth: '50px', textAlign: 'center' }}>
+                  {wpm} WPM
+                </span>
+                <button
+                  onClick={() => setWpm((prev) => Math.min(240, prev + 10))}
+                  style={{
+                    border: 'none',
+                    background: 'rgba(255, 255, 255, 0.1)',
+                    color: '#FFFFFF',
+                    width: '20px',
+                    height: '20px',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontWeight: 700,
+                    fontSize: '12px',
+                  }}
+                >
+                  +
+                </button>
+              </div>
+            ) : (
+              <span style={{ fontSize: '11px', color: '#94A3B8' }}>
+                {speechStatus === 'listening' ? '🎙️ 음성 듣는 중' : '대기 중'}
+              </span>
+            )}
           </div>
         </div>
       ) : (
@@ -871,18 +1054,12 @@ export const PrompterView: React.FC<PrompterViewProps> = ({
                         display: 'inline',
                         padding: '2px 4px',
                         borderRadius: 'var(--tds-radius-s)',
-                        backgroundColor: isCurrent
-                          ? (bgOpacity < 1.0 ? 'rgba(56, 189, 248, 0.25)' : 'var(--tds-blue-50, #E8F3FF)')
-                          : 'transparent',
+                        backgroundColor: isCurrent ? 'var(--tds-blue-50, #E8F3FF)' : 'transparent',
                         color: isCurrent
-                          ? (bgOpacity < 1.0 ? '#38BDF8' : 'var(--tds-blue-600, #1B64DA)')
+                          ? 'var(--tds-blue-600, #1B64DA)'
                           : isPast
-                          ? (bgOpacity < 1.0 ? 'rgba(255, 255, 255, 0.55)' : 'var(--tds-grey-400, #B0B8C1)')
-                          : (bgOpacity < 1.0 ? '#FFFFFF' : 'var(--tds-grey-900, #191F28)'),
-                        textShadow: bgOpacity < 1.0
-                          ? '0 1px 3px rgba(0, 0, 0, 0.95), 0 0 8px rgba(0, 0, 0, 0.85)'
-                          : 'none',
-                        opacity: 1,
+                          ? 'var(--tds-grey-400, #B0B8C1)'
+                          : 'var(--tds-grey-900, #191F28)',
                         fontWeight: isCurrent ? 700 : 500,
                         cursor: 'pointer',
                         transition: 'all 120ms ease',
@@ -899,21 +1076,19 @@ export const PrompterView: React.FC<PrompterViewProps> = ({
         </div>
       )}
 
-      {/* 5. 하단 컨트롤 덱 (Floating Control Deck) */}
-      <div style={{
-        height: isSubtitleMode ? '48px' : '72px',
-        padding: isSubtitleMode ? '0 20px' : '0 32px',
-        backgroundColor: bgOpacity === 0
-          ? 'rgba(15, 23, 42, 0.40)'
-          : (isSubtitleMode || bgOpacity < 1.0 ? `rgba(15, 23, 42, ${Math.max(0.65, bgOpacity)})` : 'var(--tds-bg-primary)'),
-        borderTop: isSubtitleMode || bgOpacity < 1.0 ? '1px solid rgba(255, 255, 255, 0.12)' : '1px solid var(--tds-line-default)',
-        boxShadow: 'var(--tds-shadow-2)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        zIndex: 20,
-        backdropFilter: bgOpacity < 1.0 ? 'blur(16px)' : 'none',
-      }}>
+      {/* 5. 하단 컨트롤 덱 (일반 전체 프롬프터 모드 전용) */}
+      {!isSubtitleMode && (
+        <div style={{
+          height: '72px',
+          padding: '0 32px',
+          backgroundColor: 'var(--tds-bg-primary)',
+          borderTop: '1px solid var(--tds-line-default)',
+          boxShadow: 'var(--tds-shadow-2)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          zIndex: 20,
+        }}>
         {/* 좌측 이동 제어 */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <TButton
@@ -1005,15 +1180,16 @@ export const PrompterView: React.FC<PrompterViewProps> = ({
             </div>
           )}
 
-          <TButton
-            variant="ghost"
-            size={isSubtitleMode ? 's' : 'm'}
-            onClick={handleClose}
-          >
-            연습 종료
-          </TButton>
+            <TButton
+              variant="ghost"
+              size="m"
+              onClick={handleClose}
+            >
+              연습 종료
+            </TButton>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

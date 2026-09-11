@@ -198,8 +198,9 @@ function createWindow(): void {
     },
     title: 'RehearsePrompt',
     icon: path.join(__dirname, '../../build/icon.ico'),
-    backgroundColor: '#00000000',
-    transparent: true,
+    backgroundColor: '#FFFFFF',
+    transparent: false,
+    resizable: true,
     show: !isSmokeTestMode, // smoke test 모드에서는 화면 표시 생략
   });
 

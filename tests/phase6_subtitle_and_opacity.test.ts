@@ -180,19 +180,32 @@ describe('PHASE 6: 텔레프롬프터 투명도 제어 및 슬림 자막 모드 
 		expect(isPlaying).toBe(false);
 	});
 
-	it('배경 투명도 프리셋(100%, 70%, 35%, 투명)이 정확한 수치로 매핑되어야 한다', () => {
-		// Given: 배경 투명도 프리셋 정의
-		const presets = [
-			{ val: 1.0, label: '100%' },
-			{ val: 0.7, label: '70%' },
-			{ val: 0.35, label: '35%' },
-			{ val: 0.0, label: '투명' },
-		];
+	it('일정 속도 모드 선택 시 대기 없이 즉시 재생 상태로 활성화되어야 한다', () => {
+		// Given: 정지 상태 및 카운트다운 잔여 상태
+		let scrollMode: 'voice' | 'constant' = 'voice';
+		let isPlaying = false;
+		let countdown: number | null = 3;
 
-		// Then: 완전 투명(0.0)부터 완전 불투명(1.0)까지 올바르게 지원해야 함
-		expect(presets[0].val).toBe(1.0);
-		expect(presets[1].val).toBe(0.7);
-		expect(presets[2].val).toBe(0.35);
-		expect(presets[3].val).toBe(0.0);
+		// When: 사용자가 '일정 속도' 버튼 클릭
+		if (scrollMode === 'constant') {
+			isPlaying = !isPlaying;
+		} else {
+			scrollMode = 'constant';
+			countdown = null;
+			isPlaying = true;
+		}
+
+		// Then: 모드가 constant로 변경되고 카운트다운 없이 즉시 isPlaying이 true가 되어야 한다
+		expect(scrollMode).toBe('constant');
+		expect(countdown).toBeNull();
+		expect(isPlaying).toBe(true);
+
+		// When 2: 이미 constant 상태에서 다시 클릭 시 일시정지 토글
+		if (scrollMode === 'constant') {
+			isPlaying = !isPlaying;
+		}
+
+		// Then 2: 정지 상태로 전환되어야 함
+		expect(isPlaying).toBe(false);
 	});
 });

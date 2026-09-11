@@ -6,12 +6,13 @@ import { TToast, type ToastMessage } from './components/common/TToast.tsx';
 import { ScriptSidebar } from './components/editor/ScriptSidebar.tsx';
 import { EditorView } from './components/editor/EditorView.tsx';
 import { PrompterView } from './components/prompter/PrompterView.tsx';
+import { SettingsModal } from './components/settings/SettingsModal.tsx';
 import type { IAppInfo, IAppSettings, IScript } from '../types/index.ts';
 import { Pin, Play, Settings as SettingsIcon } from 'lucide-react';
 
 export const App: React.FC = () => {
   const [appInfo, setAppInfo] = useState<IAppInfo | null>(null);
-  const [_settings, setSettings] = useState<IAppSettings | null>(null);
+  const [settings, setSettings] = useState<IAppSettings | null>(null);
   const [scripts, setScripts] = useState<IScript[]>([]);
   const [selectedScriptId, setSelectedScriptId] = useState<string | null>(null);
 
@@ -96,6 +97,13 @@ export const App: React.FC = () => {
       return saved;
     }
     throw new Error('API not available');
+  };
+
+  const handleUpdateSettings = async (updated: Partial<IAppSettings>) => {
+    if (window.electronAPI) {
+      const saved = await window.electronAPI.saveSettings(updated);
+      setSettings(saved);
+    }
   };
 
   // 즐겨찾기 토글
@@ -197,7 +205,7 @@ export const App: React.FC = () => {
         display: 'flex',
         flexDirection: 'column',
         height: '100vh',
-        backgroundColor: activeTab === 'prompter' ? 'transparent' : 'var(--tds-bg-secondary)',
+        backgroundColor: 'var(--tds-bg-secondary)',
       }}>
         {activeTab === 'prompter' && selectedScript ? (
           /* 텔레프롬프터 전용 뷰 (투명 배경 투과 지원) */
@@ -323,6 +331,16 @@ export const App: React.FC = () => {
           secondaryLabel="취소"
           onPrimary={handleConfirmDelete}
           onSecondary={() => setDeleteTargetId(null)}
+        />
+
+        {/* 환경설정 모달 */}
+        <SettingsModal
+          isOpen={activeTab === 'settings'}
+          onClose={() => setActiveTab('editor')}
+          settings={settings}
+          onUpdateSettings={handleUpdateSettings}
+          appInfo={appInfo}
+          onNotify={(msg, type) => showToast(msg, type)}
         />
 
         {/* 토스트 메시지 */}
