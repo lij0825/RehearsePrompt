@@ -231,46 +231,170 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 							</div>
 
 							<div>
-								<label style={{ fontSize: '14px', fontWeight: 700, display: 'block', marginBottom: '8px' }}>
-									기본 낭독 속도 (WPM)
-								</label>
-								<div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+								<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+									<label style={{ fontSize: '14px', fontWeight: 700 }}>
+										기본 낭독 속도 (WPM)
+									</label>
+									<span style={{ fontSize: '12px', color: 'var(--tds-grey-600)' }}>
+										일반 발표 권장: 120 ~ 140 WPM
+									</span>
+								</div>
+
+								{/* WPM 조절 컨트롤: 마이너스 버튼, 드래그 슬라이더, 플러스 버튼, 직접 입력창 */}
+								<div
+									onWheel={(e) => {
+										e.preventDefault();
+										setWpm((prev) => Math.max(60, Math.min(240, prev + (e.deltaY < 0 ? 5 : -5))));
+									}}
+									style={{
+										display: 'flex',
+										alignItems: 'center',
+										gap: '12px',
+										backgroundColor: 'var(--tds-bg-secondary)',
+										padding: '10px 16px',
+										borderRadius: 'var(--tds-radius-m)',
+										border: '1px solid var(--tds-line-default)',
+									}}
+									title="슬라이더 드래그, 직접 입력, 마우스 휠로 자유롭게 조절할 수 있습니다"
+								>
 									<button
+										type="button"
 										onClick={() => setWpm((prev) => Math.max(60, prev - 5))}
 										style={{
-											width: '36px',
-											height: '36px',
+											width: '32px',
+											height: '32px',
 											borderRadius: 'var(--tds-radius-m)',
 											border: '1px solid var(--tds-line-default)',
 											background: '#FFFFFF',
 											cursor: 'pointer',
 											fontWeight: 700,
 											fontSize: '16px',
+											display: 'flex',
+											alignItems: 'center',
+											justifyContent: 'center',
+											flexShrink: 0,
 										}}
+										title="5 WPM 감소"
 									>
 										-
 									</button>
-									<span style={{ fontSize: '18px', fontWeight: 800, width: '90px', textAlign: 'center' }}>
-										{wpm} WPM
-									</span>
+
+									{/* 드래그 슬라이더 */}
+									<input
+										type="range"
+										min={60}
+										max={240}
+										step={5}
+										value={wpm}
+										onChange={(e) => setWpm(Number(e.target.value))}
+										style={{
+											flex: 1,
+											cursor: 'pointer',
+											accentColor: 'var(--tds-blue-500)',
+											height: '6px',
+										}}
+										title="드래그하여 WPM 조절 (60 ~ 240)"
+									/>
+
 									<button
+										type="button"
 										onClick={() => setWpm((prev) => Math.min(240, prev + 5))}
 										style={{
-											width: '36px',
-											height: '36px',
+											width: '32px',
+											height: '32px',
 											borderRadius: 'var(--tds-radius-m)',
 											border: '1px solid var(--tds-line-default)',
 											background: '#FFFFFF',
 											cursor: 'pointer',
 											fontWeight: 700,
 											fontSize: '16px',
+											display: 'flex',
+											alignItems: 'center',
+											justifyContent: 'center',
+											flexShrink: 0,
 										}}
+										title="5 WPM 증가"
 									>
 										+
 									</button>
-									<span style={{ fontSize: '12px', color: 'var(--tds-grey-600)', marginLeft: '8px' }}>
-										(일반 한국어 발표 권장: 120 ~ 140 WPM)
-									</span>
+
+									{/* 직접 숫자 입력 필드 */}
+									<div style={{
+										display: 'flex',
+										alignItems: 'center',
+										border: '1px solid var(--tds-line-default)',
+										borderRadius: 'var(--tds-radius-m)',
+										padding: '4px 8px',
+										backgroundColor: '#FFFFFF',
+										flexShrink: 0,
+									}}>
+										<input
+											type="number"
+											min={60}
+											max={240}
+											step={5}
+											value={wpm === 0 ? '' : wpm}
+											onChange={(e) => {
+												const val = parseInt(e.target.value, 10);
+												if (!isNaN(val)) {
+													setWpm(val);
+												} else if (e.target.value === '') {
+													setWpm(0);
+												}
+											}}
+											onBlur={() => {
+												setWpm((prev) => Math.max(60, Math.min(240, prev || 130)));
+											}}
+											onKeyDown={(e) => {
+												if (e.key === 'Enter') {
+													(e.target as HTMLInputElement).blur();
+												}
+											}}
+											style={{
+												width: '52px',
+												border: 'none',
+												outline: 'none',
+												fontSize: '16px',
+												fontWeight: 800,
+												textAlign: 'right',
+												color: 'var(--tds-blue-600)',
+											}}
+											title="클릭하여 원하는 WPM 숫자 직접 입력"
+										/>
+										<span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--tds-grey-700)', marginLeft: '4px' }}>
+											WPM
+										</span>
+									</div>
+								</div>
+
+								{/* 빠른 프리셋 칩 버튼들 */}
+								<div style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
+									{[
+										{ label: '느리게 (90)', val: 90 },
+										{ label: '보통 (130)', val: 130 },
+										{ label: '약간 빠르게 (150)', val: 150 },
+										{ label: '빠르게 (180)', val: 180 },
+									].map((preset) => (
+										<button
+											key={preset.val}
+											type="button"
+											onClick={() => setWpm(preset.val)}
+											style={{
+												padding: '4px 10px',
+												borderRadius: 'var(--tds-radius-full)',
+												border: wpm === preset.val
+													? '1.5px solid var(--tds-blue-500)'
+													: '1px solid var(--tds-line-default)',
+												backgroundColor: wpm === preset.val ? 'var(--tds-blue-50)' : '#FFFFFF',
+												color: wpm === preset.val ? 'var(--tds-blue-600)' : 'var(--tds-grey-700)',
+												fontSize: '12px',
+												fontWeight: wpm === preset.val ? 700 : 500,
+												cursor: 'pointer',
+											}}
+										>
+											{preset.label}
+										</button>
+									))}
 								</div>
 							</div>
 

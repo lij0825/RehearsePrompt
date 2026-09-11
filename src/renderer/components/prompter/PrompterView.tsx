@@ -966,8 +966,23 @@ export const PrompterView: React.FC<PrompterViewProps> = ({
             </button>
 
             {scrollMode === 'constant' ? (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <div
+                onWheel={(e) => {
+                  e.preventDefault();
+                  setWpm((prev) => Math.max(60, Math.min(240, prev + (e.deltaY < 0 ? 5 : -5))));
+                }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  backgroundColor: 'rgba(255, 255, 255, 0.08)',
+                  padding: '2px 6px',
+                  borderRadius: '6px',
+                }}
+                title="슬라이더 드래그, 직접 입력, 마우스 휠로 WPM 조절"
+              >
                 <button
+                  type="button"
                   onClick={() => setWpm((prev) => Math.max(60, prev - 5))}
                   style={{
                     border: 'none',
@@ -979,14 +994,33 @@ export const PrompterView: React.FC<PrompterViewProps> = ({
                     cursor: 'pointer',
                     fontWeight: 700,
                     fontSize: '12px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
                   }}
+                  title="5 WPM 감소"
                 >
                   -
                 </button>
-                <span style={{ fontSize: '11px', fontWeight: 700, minWidth: '50px', textAlign: 'center' }}>
-                  {wpm} WPM
-                </span>
+
+                <input
+                  type="range"
+                  min={60}
+                  max={240}
+                  step={5}
+                  value={wpm}
+                  onChange={(e) => setWpm(Number(e.target.value))}
+                  style={{
+                    width: '60px',
+                    height: '4px',
+                    cursor: 'pointer',
+                    accentColor: '#38BDF8',
+                  }}
+                  title="드래그하여 WPM 조절 (60 ~ 240)"
+                />
+
                 <button
+                  type="button"
                   onClick={() => setWpm((prev) => Math.min(240, prev + 5))}
                   style={{
                     border: 'none',
@@ -998,10 +1032,57 @@ export const PrompterView: React.FC<PrompterViewProps> = ({
                     cursor: 'pointer',
                     fontWeight: 700,
                     fontSize: '12px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
                   }}
+                  title="5 WPM 증가"
                 >
                   +
                 </button>
+
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                  <input
+                    type="number"
+                    min={60}
+                    max={240}
+                    step={5}
+                    value={wpm === 0 ? '' : wpm}
+                    onChange={(e) => {
+                      const val = parseInt(e.target.value, 10);
+                      if (!isNaN(val)) {
+                        setWpm(val);
+                      } else if (e.target.value === '') {
+                        setWpm(0);
+                      }
+                    }}
+                    onBlur={() => {
+                      setWpm((prev) => Math.max(60, Math.min(240, prev || 130)));
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        (e.target as HTMLInputElement).blur();
+                      }
+                    }}
+                    style={{
+                      width: '38px',
+                      height: '20px',
+                      padding: '0 2px',
+                      textAlign: 'right',
+                      border: '1px solid rgba(255, 255, 255, 0.2)',
+                      borderRadius: '4px',
+                      background: 'rgba(0, 0, 0, 0.3)',
+                      fontSize: '11px',
+                      fontWeight: 700,
+                      color: '#38BDF8',
+                      outline: 'none',
+                    }}
+                    title="클릭하여 원하는 WPM 직접 입력"
+                  />
+                  <span style={{ fontSize: '10px', fontWeight: 700, color: '#94A3B8', marginLeft: '2px' }}>
+                    WPM
+                  </span>
+                </div>
               </div>
             ) : (
               <span style={{ fontSize: '11px', color: '#94A3B8' }}>
@@ -1158,46 +1239,124 @@ export const PrompterView: React.FC<PrompterViewProps> = ({
         {/* 우측: WPM 속도 조절 & 종료 */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           {scrollMode === 'constant' && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <div
+              onWheel={(e) => {
+                e.preventDefault();
+                setWpm((prev) => Math.max(60, Math.min(240, prev + (e.deltaY < 0 ? 5 : -5))));
+              }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '4px 10px',
+                backgroundColor: 'var(--tds-bg-secondary)',
+                borderRadius: 'var(--tds-radius-m)',
+                border: '1px solid var(--tds-line-default)',
+              }}
+              title="슬라이더 드래그, 직접 입력, 마우스 휠로 WPM 조절"
+            >
               <button
+                type="button"
                 onClick={() => setWpm((prev) => Math.max(60, prev - 5))}
                 style={{
-                  width: isSubtitleMode ? '28px' : '32px',
-                  height: isSubtitleMode ? '28px' : '32px',
-                  borderRadius: 'var(--tds-radius-m)',
-                  border: isSubtitleMode ? '1px solid rgba(255, 255, 255, 0.2)' : '1px solid var(--tds-line-default)',
-                  background: 'none',
-                  color: isSubtitleMode ? '#F8FAFC' : 'inherit',
+                  width: '26px',
+                  height: '26px',
+                  borderRadius: 'var(--tds-radius-s)',
+                  border: '1px solid var(--tds-line-default)',
+                  background: '#FFFFFF',
+                  color: 'inherit',
                   cursor: 'pointer',
                   fontWeight: 700,
+                  fontSize: '14px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
                 }}
+                title="5 WPM 감소"
               >
                 -
               </button>
-              <span className="tds-tabular" style={{
-                fontWeight: 700,
-                fontSize: isSubtitleMode ? '13px' : '15px',
-                width: isSubtitleMode ? '60px' : '70px',
-                textAlign: 'center',
-                color: isSubtitleMode ? '#F8FAFC' : 'inherit',
-              }}>
-                {wpm} WPM
-              </span>
+
+              <input
+                type="range"
+                min={60}
+                max={240}
+                step={5}
+                value={wpm}
+                onChange={(e) => setWpm(Number(e.target.value))}
+                style={{
+                  width: '84px',
+                  height: '5px',
+                  cursor: 'pointer',
+                  accentColor: 'var(--tds-blue-500)',
+                }}
+                title="드래그하여 WPM 조절 (60 ~ 240)"
+              />
+
               <button
+                type="button"
                 onClick={() => setWpm((prev) => Math.min(240, prev + 5))}
                 style={{
-                  width: isSubtitleMode ? '28px' : '32px',
-                  height: isSubtitleMode ? '28px' : '32px',
-                  borderRadius: 'var(--tds-radius-m)',
-                  border: isSubtitleMode ? '1px solid rgba(255, 255, 255, 0.2)' : '1px solid var(--tds-line-default)',
-                  background: 'none',
-                  color: isSubtitleMode ? '#F8FAFC' : 'inherit',
+                  width: '26px',
+                  height: '26px',
+                  borderRadius: 'var(--tds-radius-s)',
+                  border: '1px solid var(--tds-line-default)',
+                  background: '#FFFFFF',
+                  color: 'inherit',
                   cursor: 'pointer',
                   fontWeight: 700,
+                  fontSize: '14px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
                 }}
+                title="5 WPM 증가"
               >
                 +
               </button>
+
+              <div style={{ display: 'flex', alignItems: 'center' }}>
+                <input
+                  type="number"
+                  min={60}
+                  max={240}
+                  step={5}
+                  value={wpm === 0 ? '' : wpm}
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value, 10);
+                    if (!isNaN(val)) {
+                      setWpm(val);
+                    } else if (e.target.value === '') {
+                      setWpm(0);
+                    }
+                  }}
+                  onBlur={() => {
+                    setWpm((prev) => Math.max(60, Math.min(240, prev || 130)));
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      (e.target as HTMLInputElement).blur();
+                    }
+                  }}
+                  style={{
+                    width: '46px',
+                    height: '24px',
+                    padding: '0 4px',
+                    textAlign: 'right',
+                    border: '1px solid var(--tds-line-default)',
+                    borderRadius: 'var(--tds-radius-s)',
+                    background: '#FFFFFF',
+                    fontSize: '13px',
+                    fontWeight: 700,
+                    color: 'var(--tds-blue-600)',
+                    outline: 'none',
+                  }}
+                  title="클릭하여 원하는 WPM 직접 입력"
+                />
+                <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--tds-grey-600)', marginLeft: '3px' }}>
+                  WPM
+                </span>
+              </div>
             </div>
           )}
 

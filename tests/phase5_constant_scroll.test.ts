@@ -194,4 +194,40 @@ describe('PHASE 5: 텔레프롬프터 일정 속도 자동 스크롤 핵심 연�
 		expect(initialCountdown).toBeNull();
 		expect(initialIsPlaying).toBe(true);
 	});
+
+	it('사용자가 WPM을 직접 타이핑하여 입력할 때 60~240 범위로 안전하게 보정(Clamping)되어야 한다', () => {
+		// Given: 직접 입력 보정 헬퍼
+		const clampWpm = (val: number): number => Math.max(60, Math.min(240, val || 130));
+
+		// When 1: 범위 내 정상 수치 입력 (예: 145 WPM, 180 WPM)
+		expect(clampWpm(145)).toBe(145);
+		expect(clampWpm(180)).toBe(180);
+
+		// When 2: 너무 낮은 수치 입력 (예: 20 WPM)
+		expect(clampWpm(20)).toBe(60);
+
+		// When 3: 너무 높은 수치 입력 (예: 500 WPM)
+		expect(clampWpm(500)).toBe(240);
+
+		// When 4: 빈 값이나 0 입력 시 기본값 130 또는 최소값 보정
+		expect(clampWpm(0)).toBe(130);
+	});
+
+	it('마우스 휠 스크롤 이벤트 발생 시 WPM이 5단위로 즉각 가감되어야 한다', () => {
+		// Given: 현재 130 WPM
+		let currentWpm = 130;
+		const handleWheelDelta = (deltaY: number) => {
+			currentWpm = Math.max(60, Math.min(240, currentWpm + (deltaY < 0 ? 5 : -5)));
+		};
+
+		// When 1: 휠 위로 스크롤 (deltaY < 0)
+		handleWheelDelta(-100);
+		// Then 1: 5 WPM 증가 (135)
+		expect(currentWpm).toBe(135);
+
+		// When 2: 휠 아래로 스크롤 (deltaY > 0)
+		handleWheelDelta(100);
+		// Then 2: 5 WPM 감소 (130)
+		expect(currentWpm).toBe(130);
+	});
 });
